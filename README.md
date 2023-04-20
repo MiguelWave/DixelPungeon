@@ -1,4 +1,4 @@
-# SDL-Project
+# DIXEL PUNGEON
 A little game for a uni assignment
 
 ---Dependencies---
