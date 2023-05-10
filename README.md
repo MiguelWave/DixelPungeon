@@ -3,7 +3,7 @@ A little game for a uni assignment
 
 ---Dependencies---
 
-C++ Libraries <SDL.h> and <bits/stdc++.h>
+C++ Libraries <SDL.h> and <bits/stdc++.h> and <SDL_TTF>
 
 
 ---Description---
@@ -18,5 +18,5 @@ If all that's a little too much for a 2-bit dungeon crawler game made by an unex
 
 ---How to play---
 
-Since the game is still in its alpha stages, the rules are fairly simple: avoid the enemies (the red blocks) and get to the exit (the green block) using WASD.
+Since the game is still in its alpha stages, the rules are fairly simple: avoid the enemies (the red blocks) and get to the exit (the white block) using omni-directional controls: W for North, E for Northeast, D for East, C for Southeast, S for South, Z for Southwest, A for West, Q for Northwest.
 You can also create your own map with instructions in map.txt.
