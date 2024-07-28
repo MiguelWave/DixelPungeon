@@ -8,6 +8,7 @@ C++ Libraries <SDL.h> and <bits/stdc++.h> and <SDL_TTF>
 ---Installation---
 
 Refer to [this guide](https://lazyfoo.net/tutorials/SDL/01_hello_SDL/windows/codeblocks/index.php)
+
 After installing codeblocks and SDL2 on codeblocks, clone this repo and open Dixel Pungeon.cbp then press F9 to build and run
 
 ---Description---
