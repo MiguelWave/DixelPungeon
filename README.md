@@ -7,9 +7,15 @@ C++ Libraries <SDL.h> and <bits/stdc++.h> and <SDL_TTF>
 
 ---Installation---
 
-Refer to [this guide](https://lazyfoo.net/tutorials/SDL/01_hello_SDL/windows/codeblocks/index.php)
+Install codeblocks.
 
-After installing codeblocks and SDL2 on codeblocks, clone this repo and open Dixel Pungeon.cbp then press F9 to build and run
+After installing codeblocks, clone this repo and open Dixel Pungeon.cbp.
+
+On the top bar, go to projects->build options.
+
+In Linker settings section, add "-lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf" (brackets not included) in Other linker options.
+
+In Search Directories section, 
 
 ---Description---
 
