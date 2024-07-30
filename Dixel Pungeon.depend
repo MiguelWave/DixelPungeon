@@ -11,3 +11,15 @@
 	<SDL.h>
 	"DPUtils.h"
 
+1722351249 source:e:\dixelpungeon\dputils.cpp
+	"DPUtils.h"
+
+1722351249 e:\dixelpungeon\dputils.h
+	<bits/stdc++.h>
+	<SDL.h>
+
+1722351249 source:e:\dixelpungeon\main.cpp
+	<bits/stdc++.h>
+	<SDL.h>
+	"DPUtils.h"
+
