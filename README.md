@@ -15,7 +15,7 @@ On the top bar, go to projects->build options.
 
 In Linker settings section, add "-lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf" (brackets not included) in Other linker options.
 
-In Search Directories section, 
+In Search Directories section: 1. In compiler: make sure there are paths to include/SDL2's. 2. In Linker: make sure there are paths to lib's.
 
 ---Description---
 
