@@ -1,6 +1,9 @@
 #include <bits/stdc++.h>
 #include <SDL.h>
 #include "DPUtils.h"
+#include <SDL_ttf.h>
+#include <SDL_mixer.h>
+#include <SDL_image.h>
 
 using namespace std;
 
@@ -549,20 +552,18 @@ bool checkForWallsBetween(const cell &a, const cell &b)
 //************************1.9.3: Graphics****************************
 SDL_Texture* loadTexture(const string &file, SDL_Renderer *ren)
 {
-	//Init texture
 	SDL_Texture *texture = nullptr;
-	//Nạp ảnh từ tên file (với đường dẫn)
+
 	SDL_Surface *loadedImage = SDL_LoadBMP(file.c_str());
-	//Nếu không có lỗi, chuyển đổi về dạng texture and và trả về
-	if (loadedImage != nullptr){
+
+	if (loadedImage != nullptr) {
 		texture = SDL_CreateTextureFromSurface(ren, loadedImage);
-		SDL_FreeSurface(loadedImage);
-		//Đảm bảo việc chuyển đổi không có lỗi
-		if (texture == nullptr){
+		if (texture == nullptr) {
 			logSDLError(cout, "CreateTextureFromSurface");
+
+		SDL_FreeSurface(loadedImage);
 		}
-	}
-	else {
+	} else {
 		logSDLError(cout, "LoadBMP");
 	}
 	return texture;

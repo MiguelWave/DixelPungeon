@@ -2,7 +2,16 @@
 <CodeBlocks_layout_file>
 	<FileVersion major="1" minor="0" />
 	<ActiveTarget name="Debug" />
-	<File name="DPUtils.cpp" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="3" zoom_2="0">
+	<File name="main.cpp" open="1" top="1" tabpos="2" split="0" active="1" splitpos="0" zoom_1="5" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="83" topLine="0" />
+		</Cursor>
+		<Folding>
+			<Collapse line="195" />
+			<Collapse line="296" />
+		</Folding>
+	</File>
+	<File name="DPUtils.cpp" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="3" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="1401" topLine="0" />
 		</Cursor>
@@ -13,18 +22,9 @@
 			<Collapse line="41" />
 		</Folding>
 	</File>
-	<File name="main.cpp" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="5" zoom_2="0">
+	<File name="DPUtils.h" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="2" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="94" topLine="501" />
-		</Cursor>
-		<Folding>
-			<Collapse line="194" />
-			<Collapse line="295" />
-		</Folding>
-	</File>
-	<File name="DPUtils.h" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="2" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="1064" topLine="0" />
+			<Cursor1 position="56" topLine="3" />
 		</Cursor>
 	</File>
 </CodeBlocks_layout_file>
