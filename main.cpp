@@ -7,7 +7,15 @@
 
 using namespace std;
 
-
+//struct button{
+//    int x;
+//    int y;
+//    int w;
+//    int h;
+//    SDL_Texture* Idle;
+//    SDL_Texture* Selected;
+//
+//};
 
 //Elements
 int winCon = 0; //-1 means loss, 0 means game cancelled, 1 means win
@@ -36,25 +44,25 @@ void pMoveNW(entity &ent);
 void pMoveSW(entity &ent);
 
 
-//*********************************************************************
-// In use as of 1.9.1
+
 
 cell getCellAtXY(int x, int y);
 int getTypeAtXY(int x, int y);
 bool inSight(const cell &a, const cell &b, int VIS);
 bool checkForWallsBetween(const cell &a, const cell &b);
 
-// Graphics 1.9.3
+void RefreshMenu(SDL_Window* window, SDL_Renderer* renderer, const vector<SDL_Texture*> &assets, const int& SelectorPosition);
 SDL_Texture* loadTexture(const string &file, SDL_Renderer *ren);
-//******************1.10: Enemy AI*******************************
+
 void NPCMove(entity &ent);
 void moveToLastSeen(entity &ent);
 void moveRandom(entity &ent);
 void NPCAttack(const entity &ent);
 
-//**********************************************************************
-// **********************MAIN******************************************
-//********************************************************************
+
+
+//void GetClick() {}
+
 int main(int argc, char* argv[])
 {
     // Window initialization
@@ -83,31 +91,105 @@ int main(int argc, char* argv[])
     assets.push_back(loadTexture("Assets/floor2.bmp",renderer));
     assets.push_back(loadTexture("Assets/wall2.bmp",renderer));
 
+    vector<SDL_Texture*> MenuAssets;
+    MenuAssets.push_back(loadTexture("Assets/title.PNG",renderer));
+    MenuAssets.push_back(loadTexture("Assets/start.PNG",renderer));
+    MenuAssets.push_back(loadTexture("Assets/settings.PNG",renderer));
+    MenuAssets.push_back(loadTexture("Assets/quit.PNG",renderer));
+    MenuAssets.push_back(loadTexture("Assets/selector.PNG",renderer));
+
+    bool GameStarted = false;
+    int Selector = 1;
+
     // Render
 
-    refreshScreen(window, renderer, assets);
+    RefreshMenu(window, renderer, MenuAssets, Selector);
     while (true) {
-        // Idling
-        SDL_Delay(10);
-        if ( SDL_WaitEvent(&e) == 0) continue;
-        // Exit via big red X
-        if (e.type == SDL_QUIT) break;
-        // Player input analyzation
-        if (e.type == SDL_KEYDOWN) {
-            if (e.key.keysym.sym == SDLK_ESCAPE) break;     // Exit via ESC
-            if (e.key.keysym.sym == SDLK_a) {pMoveW(player); for (int i=0; i<listOfEntities.size(); i++) NPCMove(listOfEntities[i]); }
-            if (e.key.keysym.sym == SDLK_d) {pMoveE(player); for (int i=0; i<listOfEntities.size(); i++) NPCMove(listOfEntities[i]); }
-            if (e.key.keysym.sym == SDLK_s) {pMoveS(player); for (int i=0; i<listOfEntities.size(); i++) NPCMove(listOfEntities[i]); }
-            if (e.key.keysym.sym == SDLK_w) {pMoveN(player); for (int i=0; i<listOfEntities.size(); i++) NPCMove(listOfEntities[i]); }
-            if (e.key.keysym.sym == SDLK_e) {pMoveNE(player); for (int i=0; i<listOfEntities.size(); i++) NPCMove(listOfEntities[i]); }
-            if (e.key.keysym.sym == SDLK_q) {pMoveNW(player); for (int i=0; i<listOfEntities.size(); i++) NPCMove(listOfEntities[i]); }
-            if (e.key.keysym.sym == SDLK_c) {pMoveSE(player); for (int i=0; i<listOfEntities.size(); i++) NPCMove(listOfEntities[i]); }
-            if (e.key.keysym.sym == SDLK_z) {pMoveSW(player); for (int i=0; i<listOfEntities.size(); i++) NPCMove(listOfEntities[i]); }
-            if (e.key.keysym.sym == SDLK_SPACE) for (int i=0; i<listOfEntities.size(); i++) NPCMove(listOfEntities[i]);
-            refreshScreen(window, renderer, assets);
+        if (!GameStarted){
+            // Idling
+            SDL_Delay(10);
+            if ( SDL_WaitEvent(&e) == 0) continue;
+
+            // Exit via big red X
+            if (e.type == SDL_QUIT) break;
+
+            // Event of user input
+            if (e.type == SDL_KEYDOWN) {
+                if (e.key.keysym.sym == SDLK_RETURN) {
+                    switch (Selector) {
+                    case 1:
+                        GameStarted = true;
+                        refreshScreen(window, renderer,assets);
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        return 0;
+                    }
+                } else if (e.key.keysym.sym == SDLK_w || e.key.keysym.sym == SDLK_UP) {
+                    if (Selector > 1) Selector--;
+                    RefreshMenu(window, renderer, MenuAssets, Selector);
+                } else if (e.key.keysym.sym == SDLK_s || e.key.keysym.sym == SDLK_DOWN) {
+                    if (Selector < 3) Selector++;
+                    RefreshMenu(window, renderer, MenuAssets, Selector);
+                }
+            }
+
+        } else {
+            // Idling
+            SDL_Delay(10);
+            if ( SDL_WaitEvent(&e) == 0) continue;
+
+            // Exit via big red X
+            if (e.type == SDL_QUIT) break;
+
+            // Player input analyzation
+            if (e.type == SDL_KEYDOWN) {
+                bool playermoved = false;
+                if (e.key.keysym.sym == SDLK_ESCAPE) break;     // Exit via ESC
+                else switch (e.key.keysym.sym) {
+                case SDLK_a:
+                    playermoved = 1;
+                    pMoveW(player);
+                    break;
+                case SDLK_d:
+                    playermoved = 1;
+                    pMoveE(player);
+                    break;
+                case SDLK_s:
+                    playermoved = 1;
+                    pMoveS(player);
+                    break;
+                case SDLK_w:
+                    playermoved = 1;
+                    pMoveN(player);
+                    break;
+                case SDLK_e:
+                    playermoved = 1;
+                    pMoveNE(player);
+                    break;
+                case SDLK_q:
+                    playermoved = 1;
+                    pMoveNW(player);
+                    break;
+                case SDLK_c:
+                    playermoved = 1;
+                    pMoveSE(player);
+                    break;
+                case SDLK_z:
+                    playermoved = 1;
+                    pMoveSW(player);
+                    break;
+                case SDLK_SPACE:
+                    playermoved = 1;
+                    break;
+                }
+                if (playermoved) for (int i=0; i<listOfEntities.size(); i++) NPCMove(listOfEntities[i]);
+                refreshScreen(window, renderer, assets);
+            }
+            // Check win condition
+            if (winCon!=0)   break;
         }
-        // Check win condition
-        if (winCon!=0)   break;
     }
     switch (winCon){
         case -1:
@@ -123,17 +205,6 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-//*****************************************************************************
-//*****************************************************************************
-//*****************************************************************************
-
-
-//******************************Made by the_Wave**********************************************
-
-
-
-
-
 
 void importLayout(const string &path){
     string line;
@@ -190,6 +261,60 @@ void importLayout(const string &path){
         i++;//Number of lines in the internal layout
     }
     inpfile.close();
+}
+
+void RefreshMenu(SDL_Window* window, SDL_Renderer* renderer, const vector<SDL_Texture*> &MenuAssets, const int& SelectorPosition) {
+    //Clear screen
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);   //background color
+    SDL_RenderClear(renderer);
+
+    // Rendering title
+    SDL_Rect temp;
+    temp.x = 200;
+    temp.y = 100;
+    temp.w = SCREEN_WIDTH - 2 * temp.x;
+    temp.h = 100;
+    SDL_RenderCopy(renderer, MenuAssets[0], NULL, &temp);
+
+    // Rendering Start button
+    temp.x = 400;
+    temp.y = 250;
+    temp.w = SCREEN_WIDTH - 2 * temp.x;
+    temp.h = 100;
+    SDL_RenderCopy(renderer, MenuAssets[1], NULL, &temp);
+
+    // Rendering Settings button
+    temp.x = 350;
+    temp.y = 400;
+    temp.w = SCREEN_WIDTH - 2 * temp.x;
+    temp.h = 100;
+    SDL_RenderCopy(renderer, MenuAssets[2], NULL, &temp);
+
+    // Rendering Quit button
+    temp.x = 400;
+    temp.y = 550;
+    temp.w = SCREEN_WIDTH - 2 * temp.x;
+    temp.h = 100;
+    SDL_RenderCopy(renderer, MenuAssets[3], NULL, &temp);
+
+    // Rendering Selector
+    switch (SelectorPosition) {
+    case 1:
+        temp.x = 300;
+        temp.y = 250;
+        break;
+    case 2:
+        temp.x = 250;
+        temp.y = 400;
+        break;
+    case 3:
+        temp.x = 300;
+        temp.y = 550;
+    }
+    temp.w = 50;
+    temp.h = 100;
+    SDL_RenderCopy(renderer, MenuAssets[4], NULL, &temp);
+    SDL_RenderPresent(renderer);
 }
 
 
@@ -291,7 +416,6 @@ void refreshScreen(SDL_Window* window, SDL_Renderer* renderer, const vector<SDL_
         }
     }
     SDL_RenderPresent(renderer);
-
 }
 //***********************************************************************
 // Swap cells
@@ -550,11 +674,9 @@ bool checkForWallsBetween(const cell &a, const cell &b)
     return false;
 }
 //************************1.9.3: Graphics****************************
-SDL_Texture* loadTexture(const string &file, SDL_Renderer *ren)
-{
+SDL_Texture* loadTexture(const string &file, SDL_Renderer *ren){
 	SDL_Texture *texture = nullptr;
-
-	SDL_Surface *loadedImage = SDL_LoadBMP(file.c_str());
+    SDL_Surface *loadedImage = IMG_Load(file.c_str());
 
 	if (loadedImage != nullptr) {
 		texture = SDL_CreateTextureFromSurface(ren, loadedImage);

@@ -18,10 +18,13 @@
 	<bits/stdc++.h>
 	<SDL.h>
 
-1722518644 source:e:\dixelpungeon\main.cpp
+1722790348 source:e:\dixelpungeon\main.cpp
 	<bits/stdc++.h>
 	<SDL.h>
 	"DPUtils.h"
+	<SDL_ttf.h>
+	<SDL_mixer.h>
+	<SDL_image.h>
 
 1720194199 e:\dixelpungeon\sdl2\include\sdl2\sdl.h
 	"SDL_main.h"
@@ -417,8 +420,23 @@
 	"begin_code.h"
 	"close_code.h"
 
-1705848815 e:\dixelpungeon\sdl2ttf\include\sdl2\sdl_ttf.h
+1705848875 e:\dixelpungeon\sdl2ttf\include\sdl2\sdl_ttf.h
 	"SDL.h"
+	"begin_code.h"
+	"close_code.h"
+
+1705857752 e:\dixelpungeon\sdl2mixer\include\sdl2\sdl_mixer.h
+	"SDL_stdinc.h"
+	"SDL_rwops.h"
+	"SDL_audio.h"
+	"SDL_endian.h"
+	"SDL_version.h"
+	"begin_code.h"
+	"close_code.h"
+
+1704144973 e:\dixelpungeon\sdl2image\include\sdl2\sdl_image.h
+	"SDL.h"
+	"SDL_version.h"
 	"begin_code.h"
 	"close_code.h"
 

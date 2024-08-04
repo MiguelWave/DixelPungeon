@@ -1,0 +1,19 @@
+Graphics layering: background < walls and floors < characters and items
+Refactor: players/entities -> pointer | 
+
+vector<item> equipped;
+vector<item> inventory;
+
+void Painter::moveForward(float length) : in header file, we declared painter class would have void moveForward(float length) in class Painter, so in c++ file we use this unaffiliated (can be put anywhere in the file, not just in Painter) to define it
+
+refactor structs and classes:Set get + constructor + destructor, make it like actual oop
+
+item:
+
+player can interact with corpses to loot (stacked corpses can be sifted thru)
+
+player collision: can stand on corpses, items, ...
+
+monster spawn rate per turn = max(a set number, a function of sanity)
+
+installation of new sdl lib: 1. linker (-sdl...) 2. search directories->compiler->add include/SDL2. 3. search directories->linker->add lib. 4. copy paste all .dll files into the same directory as the main (.cpp) files. 5. #include
