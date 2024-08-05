@@ -29,7 +29,7 @@ vector<vector<cell>> cellLayout;
 vector<entity> listOfEntities; // Also works as a turn base
 entity player;
 
-void refreshScreen(SDL_Window* window, SDL_Renderer* renderer, const vector<SDL_Texture*>&assets);
+void RenderGame(SDL_Window* window, SDL_Renderer* renderer);
 void importLayout(const string &path);
 
 
@@ -44,14 +44,14 @@ void pMoveNW(entity &ent);
 void pMoveSW(entity &ent);
 
 
-
-
 cell getCellAtXY(int x, int y);
 int getTypeAtXY(int x, int y);
 bool inSight(const cell &a, const cell &b, int VIS);
 bool checkForWallsBetween(const cell &a, const cell &b);
 
-void RefreshMenu(SDL_Window* window, SDL_Renderer* renderer, const vector<SDL_Texture*> &assets, const int& SelectorPosition);
+
+void RenderMenu(SDL_Window* window, SDL_Renderer* renderer, const int& SelectorPosition);
+void RenderGameOver(SDL_Window* window, SDL_Renderer* renderer);
 SDL_Texture* loadTexture(const string &file, SDL_Renderer *ren);
 
 void NPCMove(entity &ent);
@@ -62,6 +62,9 @@ void NPCAttack(const entity &ent);
 
 
 //void GetClick() {}
+vector<SDL_Texture*> assets;
+vector<SDL_Texture*> MenuAssets;
+SDL_Texture* GameOver;
 
 int main(int argc, char* argv[])
 {
@@ -81,33 +84,34 @@ int main(int argc, char* argv[])
     }
 
     // Importing graphics
-    vector<SDL_Texture*> assets;
-    assets.push_back(loadTexture("Assets/space.bmp",renderer));
-    assets.push_back(loadTexture("Assets/floor1.bmp",renderer));
-    assets.push_back(loadTexture("Assets/wall.bmp",renderer));
-    assets.push_back(loadTexture("Assets/player.bmp",renderer));
-    assets.push_back(loadTexture("Assets/enemy.bmp",renderer));
-    assets.push_back(loadTexture("Assets/exit.bmp",renderer));
-    assets.push_back(loadTexture("Assets/floor2.bmp",renderer));
-    assets.push_back(loadTexture("Assets/wall2.bmp",renderer));
+    assets.push_back(loadTexture("Assets/space.bmp", renderer));
+    assets.push_back(loadTexture("Assets/floor1.bmp", renderer));
+    assets.push_back(loadTexture("Assets/wall.bmp", renderer));
+    assets.push_back(loadTexture("Assets/player.bmp", renderer));
+    assets.push_back(loadTexture("Assets/enemy.bmp", renderer));
+    assets.push_back(loadTexture("Assets/exit.bmp", renderer));
+    assets.push_back(loadTexture("Assets/floor2.bmp", renderer));
+    assets.push_back(loadTexture("Assets/wall2.bmp", renderer));
 
-    vector<SDL_Texture*> MenuAssets;
-    MenuAssets.push_back(loadTexture("Assets/title.PNG",renderer));
-    MenuAssets.push_back(loadTexture("Assets/start.PNG",renderer));
-    MenuAssets.push_back(loadTexture("Assets/settings.PNG",renderer));
-    MenuAssets.push_back(loadTexture("Assets/quit.PNG",renderer));
-    MenuAssets.push_back(loadTexture("Assets/selector.PNG",renderer));
+    MenuAssets.push_back(loadTexture("Assets/title.PNG", renderer));
+    MenuAssets.push_back(loadTexture("Assets/start.PNG", renderer));
+    MenuAssets.push_back(loadTexture("Assets/settings.PNG", renderer));
+    MenuAssets.push_back(loadTexture("Assets/quit.PNG", renderer));
+    MenuAssets.push_back(loadTexture("Assets/selector.PNG", renderer));
 
+    GameOver = loadTexture("Assets/game_over.PNG", renderer);
 
 
     bool GameStarted = false;
+    int GameStage = 0; //0. menu 1.game 2.inventory 3.gameover
     int Selector = 1;
 
     // Render
 
-    RefreshMenu(window, renderer, MenuAssets, Selector);
-    while (true) {
-        if (!GameStarted){
+    while (1) {
+        if (GameStage == 0) {
+            RenderMenu(window, renderer, Selector);
+
             // Idling
             SDL_Delay(10);
             if ( SDL_WaitEvent(&e) == 0) continue;
@@ -120,8 +124,7 @@ int main(int argc, char* argv[])
                 if (e.key.keysym.sym == SDLK_RETURN) {
                     switch (Selector) {
                     case 1:
-                        GameStarted = true;
-                        refreshScreen(window, renderer,assets);
+                        GameStage = 1;
                         break;
                     case 2:
                         break;
@@ -130,14 +133,14 @@ int main(int argc, char* argv[])
                     }
                 } else if (e.key.keysym.sym == SDLK_w || e.key.keysym.sym == SDLK_UP) {
                     if (Selector > 1) Selector--;
-                    RefreshMenu(window, renderer, MenuAssets, Selector);
+                    RenderMenu(window, renderer, Selector);
                 } else if (e.key.keysym.sym == SDLK_s || e.key.keysym.sym == SDLK_DOWN) {
                     if (Selector < 3) Selector++;
-                    RefreshMenu(window, renderer, MenuAssets, Selector);
+                    RenderMenu(window, renderer, Selector);
                 }
             }
-
-        } else {
+        } else if (GameStage == 1) {
+            RenderGame(window, renderer);
             // Idling
             SDL_Delay(10);
             if ( SDL_WaitEvent(&e) == 0) continue;
@@ -187,11 +190,21 @@ int main(int argc, char* argv[])
                     break;
                 }
                 if (playermoved) for (int i=0; i<listOfEntities.size(); i++) NPCMove(listOfEntities[i]);
-                refreshScreen(window, renderer, assets);
+                RenderGame(window, renderer);
             }
             // Check win condition
-            if (winCon!=0)   break;
+            if (winCon!=0)   GameStage = 3;
+        } else if (GameStage == 3) {
+            RenderGameOver(window, renderer);
+            if ( SDL_WaitEvent(&e) == 0) continue;
+
+            // Exit via closing window
+            if (e.type == SDL_QUIT) break;
+
+            // Event of user input
+            if (e.type == SDL_KEYDOWN) break;
         }
+
     }
     switch (winCon){
         case -1:
@@ -265,7 +278,9 @@ void importLayout(const string &path){
     inpfile.close();
 }
 
-void RefreshMenu(SDL_Window* window, SDL_Renderer* renderer, const vector<SDL_Texture*> &MenuAssets, const int& SelectorPosition) {
+
+//---Game Rendering---
+void RenderMenu(SDL_Window* window, SDL_Renderer* renderer, const int& SelectorPosition) {
     //Clear screen
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);   //background color
     SDL_RenderClear(renderer);
@@ -319,10 +334,7 @@ void RefreshMenu(SDL_Window* window, SDL_Renderer* renderer, const vector<SDL_Te
     SDL_RenderPresent(renderer);
 }
 
-
-//New frame
-void refreshScreen(SDL_Window* window, SDL_Renderer* renderer, const vector<SDL_Texture*> &assets)
-{
+void RenderGame(SDL_Window* window, SDL_Renderer* renderer) {
     int pPosI = player.I;
     int pPosJ = player.J;
 
@@ -419,7 +431,23 @@ void refreshScreen(SDL_Window* window, SDL_Renderer* renderer, const vector<SDL_
     }
     SDL_RenderPresent(renderer);
 }
-//***********************************************************************
+
+void RenderGameOver(SDL_Window* window, SDL_Renderer* renderer) {
+    //Clear screen
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);   //background color
+    SDL_RenderClear(renderer);
+
+    // Rendering title
+    SDL_Rect temp;
+    temp.x = 200;
+    temp.y = 100;
+    temp.w = SCREEN_WIDTH - 2 * temp.x;
+    temp.h = 100;
+    SDL_RenderCopy(renderer, GameOver, NULL, &temp);
+    SDL_RenderPresent(renderer);
+}
+//----------
+
 // Swap cells
 void swapCells(cell &from, cell &to)
 {
