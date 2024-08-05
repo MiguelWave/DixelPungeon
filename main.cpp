@@ -98,6 +98,8 @@ int main(int argc, char* argv[])
     MenuAssets.push_back(loadTexture("Assets/quit.PNG",renderer));
     MenuAssets.push_back(loadTexture("Assets/selector.PNG",renderer));
 
+
+
     bool GameStarted = false;
     int Selector = 1;
 
@@ -110,7 +112,7 @@ int main(int argc, char* argv[])
             SDL_Delay(10);
             if ( SDL_WaitEvent(&e) == 0) continue;
 
-            // Exit via big red X
+            // Exit via closing window
             if (e.type == SDL_QUIT) break;
 
             // Event of user input
@@ -431,141 +433,141 @@ void pMoveW(entity &ent){
     int i=ent.I;
     int j=ent.J;
 
-                switch (cellLayout[i][j-1].type){
-                    case 1:
-                        swapCells(cellLayout[i][j], cellLayout[i][j-1]);
-                        ent.J--;
-                        break;
-                    case 5:
-                        winCon=1;
-                        break;
-                    case 4:
-                        winCon=-1;
-                        break;
-                }
+    switch (cellLayout[i][j-1].type){
+    case 1:
+        swapCells(cellLayout[i][j], cellLayout[i][j-1]);
+        ent.J--;
+        break;
+    case 5:
+        winCon=1;
+        break;
+    case 4:
+        winCon=-1;
+        break;
+    }
 }
 void pMoveE(entity &ent){
     int i=ent.I;
     int j=ent.J;
 
-                switch (cellLayout[i][j+1].type){
-                    case 1:
-                        swapCells(cellLayout[i][j], cellLayout[i][j+1]);
-                        ent.J++;
-                        break;
-                    case 5:
-                        winCon=1;
-                        break;
-                    case 4:
-                        winCon=-1;
-                        break;
-                }
+    switch (cellLayout[i][j+1].type){
+    case 1:
+        swapCells(cellLayout[i][j], cellLayout[i][j+1]);
+        ent.J++;
+        break;
+    case 5:
+        winCon=1;
+        break;
+    case 4:
+        winCon=-1;
+        break;
+    }
 }
 void pMoveN(entity &ent){
     int i=ent.I;
     int j=ent.J;
 
-                switch (cellLayout[i-1][j].type){
-                    case 1:
-                        swapCells(cellLayout[i][j], cellLayout[i-1][j]);
-                        ent.I--;
-                        break;
-                    case 5:
-                        winCon=1;
-                        break;
-                    case 4:
-                        winCon=-1;
-                        break;
-                }
+    switch (cellLayout[i-1][j].type){
+    case 1:
+        swapCells(cellLayout[i][j], cellLayout[i-1][j]);
+        ent.I--;
+        break;
+    case 5:
+        winCon=1;
+        break;
+    case 4:
+        winCon=-1;
+        break;
+    }
 }
 void pMoveS(entity &ent){
     int i=ent.I;
     int j=ent.J;
 
-                switch (cellLayout[i+1][j].type){
-                    case 1:
-                        swapCells(cellLayout[i][j], cellLayout[i+1][j]);
-                        ent.I++;
-                        break;
-                    case 5:
-                        winCon=1;
-                        break;
-                    case 4:
-                        winCon=-1;
-                        break;
-                }
+    switch (cellLayout[i+1][j].type){
+    case 1:
+        swapCells(cellLayout[i][j], cellLayout[i+1][j]);
+        ent.I++;
+        break;
+    case 5:
+        winCon=1;
+        break;
+    case 4:
+        winCon=-1;
+        break;
+    }
 }
 void pMoveNE(entity &ent){
     int i=ent.I;
     int j=ent.J;
 
-                switch (cellLayout[i-1][j+1].type){
-                    case 1:
-                        swapCells(cellLayout[i][j], cellLayout[i-1][j+1]);
-                        ent.I--;
-                        ent.J++;
-                        break;
-                    case 5:
-                        winCon=1;
-                        break;
-                    case 4:
-                        winCon=-1;
-                        break;
-                }
+    switch (cellLayout[i-1][j+1].type){
+    case 1:
+        swapCells(cellLayout[i][j], cellLayout[i-1][j+1]);
+        ent.I--;
+        ent.J++;
+        break;
+    case 5:
+        winCon=1;
+        break;
+    case 4:
+        winCon=-1;
+        break;
+    }
 }
 void pMoveSE(entity &ent){
     int i=ent.I;
     int j=ent.J;
 
-                switch (cellLayout[i+1][j+1].type){
-                    case 1:
-                        swapCells(cellLayout[i][j], cellLayout[i+1][j+1]);
-                        ent.I++;
-                        ent.J++;
-                        break;
-                    case 5:
-                        winCon=1;
-                        break;
-                    case 4:
-                        winCon=-1;
-                        break;
-                }
+    switch (cellLayout[i+1][j+1].type){
+    case 1:
+        swapCells(cellLayout[i][j], cellLayout[i+1][j+1]);
+        ent.I++;
+        ent.J++;
+        break;
+    case 5:
+        winCon=1;
+        break;
+    case 4:
+        winCon=-1;
+        break;
+    }
 }
 void pMoveNW(entity &ent){
     int i=ent.I;
     int j=ent.J;
 
-                switch (cellLayout[i-1][j-1].type){
-                    case 1:
-                        swapCells(cellLayout[i][j], cellLayout[i-1][j-1]);
-                        ent.I--;
-                        ent.J--;
-                        break;
-                    case 5:
-                        winCon=1;
-                        break;
-                    case 4:
-                        winCon=-1;
-                        break;
-                }
+    switch (cellLayout[i-1][j-1].type){
+    case 1:
+        swapCells(cellLayout[i][j], cellLayout[i-1][j-1]);
+        ent.I--;
+        ent.J--;
+        break;
+    case 5:
+        winCon=1;
+        break;
+    case 4:
+        winCon=-1;
+        break;
+    }
 }
 void pMoveSW(entity &ent){
     int i=ent.I;
     int j=ent.J;
 
-                switch (cellLayout[i+1][j-1].type){
-                    case 1:
-                        swapCells(cellLayout[i][j], cellLayout[i+1][j-1]);
-                        ent.I++;
-                        ent.J--;
-                        break;
-                    case 5:
-                        winCon=1;
-                        break;
-                    case 4:
-                        winCon=-1;
-                        break;
-                }
+    switch (cellLayout[i+1][j-1].type){
+    case 1:
+        swapCells(cellLayout[i][j], cellLayout[i+1][j-1]);
+        ent.I++;
+        ent.J--;
+        break;
+    case 5:
+        winCon=1;
+        break;
+    case 4:
+        winCon=-1;
+        break;
+    }
 }
 
 // To be made into separate functions (e.g. getTypeXY or getHealthXY) to save time importing other unnecessary stats
