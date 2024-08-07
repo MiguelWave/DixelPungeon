@@ -31,7 +31,18 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
+			<Add directory="SDL2/include/SDL2" />
+			<Add directory="SDL2ttf/include/SDL2" />
+			<Add directory="SDL2mixer/include/SDL2" />
+			<Add directory="SDL2image/include/SDL2" />
 		</Compiler>
+		<Linker>
+			<Add option="-lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf -lSDL2_mixer -lSDL2_image" />
+			<Add directory="SDL2/lib" />
+			<Add directory="SDL2ttf/lib" />
+			<Add directory="SDL2mixer/lib" />
+			<Add directory="SDL2image/lib" />
+		</Linker>
 		<Unit filename="DPUtils.cpp" />
 		<Unit filename="DPUtils.h" />
 		<Unit filename="main.cpp" />
