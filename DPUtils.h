@@ -41,6 +41,8 @@ struct entity
     int lastSeenI;
     int lastSeenJ;
     int VIS;
+    int damage = 2;
+    int health = 10;
 };
 
 #endif // DPUTILS_H_INCLUDED

@@ -22,7 +22,7 @@ int winCon = 0; //-1 means loss, 0 means game cancelled, 1 means win
 int cellDim = 55; // Dimensions of each cells (in pixels)
 int playerVIS = 5;
 int entityVIS = 3;
-int renderDistance = 8;
+int renderDistance = 12;
 
 
 vector<vector<cell>> cellLayout;
@@ -57,7 +57,7 @@ SDL_Texture* loadTexture(const string &file, SDL_Renderer *ren);
 void NPCMove(entity &ent);
 void moveToLastSeen(entity &ent);
 void moveRandom(entity &ent);
-void NPCAttack(const entity &ent);
+void Attack(const entity& attacker, entity& defender);
 
 void DrawHPBar(float CurrentHP, float MaxHP, SDL_Window* window, SDL_Renderer* renderer);
 
@@ -73,152 +73,151 @@ int main(int argc, char* argv[])
     SDL_Renderer* renderer;
     initSDL(window, renderer);
 
-    DrawHPBar(0.5, 10, window, renderer);
     // Event variable
     SDL_Event e;
-//
-//    // Importing map
-//    importLayout(mapFile);
-//
-//    if (cellLayout.size()==0){
-//        cout<<"No map detected";
-//        return 0;
-//    }
-//
-//    // Importing graphics
-//    assets.push_back(loadTexture("Assets/space.bmp", renderer));
-//    assets.push_back(loadTexture("Assets/floor1.bmp", renderer));
-//    assets.push_back(loadTexture("Assets/wall.bmp", renderer));
-//    assets.push_back(loadTexture("Assets/player.bmp", renderer));
-//    assets.push_back(loadTexture("Assets/enemy.bmp", renderer));
-//    assets.push_back(loadTexture("Assets/exit.bmp", renderer));
-//    assets.push_back(loadTexture("Assets/floor2.bmp", renderer));
-//    assets.push_back(loadTexture("Assets/wall2.bmp", renderer));
-//
-//    MenuAssets.push_back(loadTexture("Assets/title.PNG", renderer));
-//    MenuAssets.push_back(loadTexture("Assets/start.PNG", renderer));
-//    MenuAssets.push_back(loadTexture("Assets/settings.PNG", renderer));
-//    MenuAssets.push_back(loadTexture("Assets/quit.PNG", renderer));
-//    MenuAssets.push_back(loadTexture("Assets/selector.PNG", renderer));
-//
-//    GameOver = loadTexture("Assets/game_over.PNG", renderer);
-//
-//
-//    bool GameStarted = false;
-//    int GameStage = 0; //0. menu 1.game 2.inventory 3.gameover
-//    int Selector = 1;
-//
-//    // Render
-//
+
+    // Importing map
+    importLayout(mapFile);
+
+    if (cellLayout.size()==0){
+        cout<<"No map detected";
+        return 0;
+    }
+
+    // Importing graphics
+    assets.push_back(loadTexture("Assets/space.bmp", renderer));
+    assets.push_back(loadTexture("Assets/floor1.bmp", renderer));
+    assets.push_back(loadTexture("Assets/wall.bmp", renderer));
+    assets.push_back(loadTexture("Assets/player.bmp", renderer));
+    assets.push_back(loadTexture("Assets/enemy.bmp", renderer));
+    assets.push_back(loadTexture("Assets/exit.bmp", renderer));
+    assets.push_back(loadTexture("Assets/floor2.bmp", renderer));
+    assets.push_back(loadTexture("Assets/wall2.bmp", renderer));
+
+    MenuAssets.push_back(loadTexture("Assets/title.PNG", renderer));
+    MenuAssets.push_back(loadTexture("Assets/start.PNG", renderer));
+    MenuAssets.push_back(loadTexture("Assets/settings.PNG", renderer));
+    MenuAssets.push_back(loadTexture("Assets/quit.PNG", renderer));
+    MenuAssets.push_back(loadTexture("Assets/selector.PNG", renderer));
+
+    GameOver = loadTexture("Assets/game_over.PNG", renderer);
+
+
+    int GameStage = 0; //0. menu 1.game 2.inventory 3.gameover
+    int Selector = 1;
+
+    // Render
+
     while (1) {
-//        if (GameStage == 0) {
-//            RenderMenu(window, renderer, Selector);
-//
+        if (GameStage == 0) {
+            RenderMenu(window, renderer, Selector);
+
+//             Idling
+            SDL_Delay(10);
+            if ( SDL_WaitEvent(&e) == 0) continue;
+
+//             Exit via closing window
+            if (e.type == SDL_QUIT) break;
+
+            // Event of user input
+            if (e.type == SDL_KEYDOWN) {
+                if (e.key.keysym.sym == SDLK_RETURN) {
+                    switch (Selector) {
+                    case 1:
+                        GameStage = 1;
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        return 0;
+                    }
+                } else if (e.key.keysym.sym == SDLK_w || e.key.keysym.sym == SDLK_UP) {
+                    if (Selector > 1) Selector--;
+                    RenderMenu(window, renderer, Selector);
+                } else if (e.key.keysym.sym == SDLK_s || e.key.keysym.sym == SDLK_DOWN) {
+                    if (Selector < 3) Selector++;
+                    RenderMenu(window, renderer, Selector);
+                }
+            }
+        } else if (GameStage == 1) {
+            RenderGame(window, renderer);
             // Idling
             SDL_Delay(10);
             if ( SDL_WaitEvent(&e) == 0) continue;
 
+            // Exit via big red X
+            if (e.type == SDL_QUIT) break;
+
+            // Player input analyzation
+            if (e.type == SDL_KEYDOWN) {
+                bool playermoved = false;
+                if (e.key.keysym.sym == SDLK_ESCAPE) break;     // Exit via ESC
+                else switch (e.key.keysym.sym) {
+                case SDLK_a:
+                    playermoved = 1;
+                    pMoveW(player);
+                    break;
+                case SDLK_d:
+                    playermoved = 1;
+                    pMoveE(player);
+                    break;
+                case SDLK_s:
+                    playermoved = 1;
+                    pMoveS(player);
+                    break;
+                case SDLK_w:
+                    playermoved = 1;
+                    pMoveN(player);
+                    break;
+                case SDLK_e:
+                    playermoved = 1;
+                    pMoveNE(player);
+                    break;
+                case SDLK_q:
+                    playermoved = 1;
+                    pMoveNW(player);
+                    break;
+                case SDLK_c:
+                    playermoved = 1;
+                    pMoveSE(player);
+                    break;
+                case SDLK_z:
+                    playermoved = 1;
+                    pMoveSW(player);
+                    break;
+                case SDLK_SPACE:
+                    playermoved = 1;
+                    break;
+                }
+                if (playermoved) for (int i = 0; i < (int)listOfEntities.size(); i++) NPCMove(listOfEntities[i]);
+                RenderGame(window, renderer);
+            }
+            // Check win condition
+            if (player.health <= 0) winCon = -1;
+            if (winCon!=0)   GameStage = 3;
+        } else if (GameStage == 3) {
+            RenderGameOver(window, renderer);
+            if ( SDL_WaitEvent(&e) == 0) continue;
+
             // Exit via closing window
             if (e.type == SDL_QUIT) break;
-//
-//            // Event of user input
-//            if (e.type == SDL_KEYDOWN) {
-//                if (e.key.keysym.sym == SDLK_RETURN) {
-//                    switch (Selector) {
-//                    case 1:
-//                        GameStage = 1;
-//                        break;
-//                    case 2:
-//                        break;
-//                    case 3:
-//                        return 0;
-//                    }
-//                } else if (e.key.keysym.sym == SDLK_w || e.key.keysym.sym == SDLK_UP) {
-//                    if (Selector > 1) Selector--;
-//                    RenderMenu(window, renderer, Selector);
-//                } else if (e.key.keysym.sym == SDLK_s || e.key.keysym.sym == SDLK_DOWN) {
-//                    if (Selector < 3) Selector++;
-//                    RenderMenu(window, renderer, Selector);
-//                }
-//            }
-//        } else if (GameStage == 1) {
-//            RenderGame(window, renderer);
-//            // Idling
-//            SDL_Delay(10);
-//            if ( SDL_WaitEvent(&e) == 0) continue;
-//
-//            // Exit via big red X
-//            if (e.type == SDL_QUIT) break;
-//
-//            // Player input analyzation
-//            if (e.type == SDL_KEYDOWN) {
-//                bool playermoved = false;
-//                if (e.key.keysym.sym == SDLK_ESCAPE) break;     // Exit via ESC
-//                else switch (e.key.keysym.sym) {
-//                case SDLK_a:
-//                    playermoved = 1;
-//                    pMoveW(player);
-//                    break;
-//                case SDLK_d:
-//                    playermoved = 1;
-//                    pMoveE(player);
-//                    break;
-//                case SDLK_s:
-//                    playermoved = 1;
-//                    pMoveS(player);
-//                    break;
-//                case SDLK_w:
-//                    playermoved = 1;
-//                    pMoveN(player);
-//                    break;
-//                case SDLK_e:
-//                    playermoved = 1;
-//                    pMoveNE(player);
-//                    break;
-//                case SDLK_q:
-//                    playermoved = 1;
-//                    pMoveNW(player);
-//                    break;
-//                case SDLK_c:
-//                    playermoved = 1;
-//                    pMoveSE(player);
-//                    break;
-//                case SDLK_z:
-//                    playermoved = 1;
-//                    pMoveSW(player);
-//                    break;
-//                case SDLK_SPACE:
-//                    playermoved = 1;
-//                    break;
-//                }
-//                if (playermoved) for (int i=0; i<listOfEntities.size(); i++) NPCMove(listOfEntities[i]);
-//                RenderGame(window, renderer);
-//            }
-//            // Check win condition
-//            if (winCon!=0)   GameStage = 3;
-//        } else if (GameStage == 3) {
-//            RenderGameOver(window, renderer);
-//            if ( SDL_WaitEvent(&e) == 0) continue;
-//
-//            // Exit via closing window
-//            if (e.type == SDL_QUIT) break;
-//
-//            // Event of user input
-//            if (e.type == SDL_KEYDOWN) break;
-//        }
-//
+
+            // Event of user input
+            if (e.type == SDL_KEYDOWN) break;
+        }
+
     }
-//    switch (winCon){
-//        case -1:
-//            cout<<"Game over! Better luck next time.";
-//            break;
-//        case 0:
-//            cout<<"Game cancelled";
-//            break;
-//        case 1:
-//            cout<<"Congratulations, you win!";
-//            break;
-//    }
+    switch (winCon){
+        case -1:
+            cout<<"Game over! Better luck next time.";
+            break;
+        case 0:
+            cout<<"Game cancelled";
+            break;
+        case 1:
+            cout<<"Congratulations, you win!";
+            break;
+    }
 
     return 0;
 }
@@ -230,7 +229,7 @@ void importLayout(const string &path){
 
 
     while (!inpfile.eof()){
-        getline(inpfile,line);
+        getline(inpfile, line);
         // Add a new line to the internal layout
         cellLayout.push_back(vector<cell>());
 
@@ -260,7 +259,7 @@ void importLayout(const string &path){
                     player.agitated=0;
                     player.VIS = playerVIS;
                     break;
-                case 'E':
+                case 'E':{
                     temp.type=4;
                     entity temp2;
                     temp2.I=temp.I;
@@ -269,6 +268,7 @@ void importLayout(const string &path){
                     temp2.VIS=entityVIS;
                     listOfEntities.push_back(temp2);
                     break;
+                }
                 case 'O':
                     temp.type=5;
                     break;
@@ -345,91 +345,59 @@ void RenderGame(SDL_Window* window, SDL_Renderer* renderer) {
 
     //Redrawing the entire thing from scratch
     SDL_Rect temp;
-    for (int i=player.I-renderDistance; i<player.I+renderDistance; ++i){
-        for (int j=player.J-renderDistance; j<player.J+renderDistance; ++j)// Only render from a certain number of cells away
-        {
-            if ((i>=0)&&(j>=0)&&(i<cellLayout.size())&&(j<cellLayout[i].size()))// Making sure that cell exists *****************
-            {
+    for (int i = player.I - renderDistance; i < player.I + renderDistance; ++i){
+        for (int j = player.J - renderDistance; j < player.J + renderDistance; ++j) {// Only render from a certain number of cells away
+            if ((i >= 0) && (j >= 0) && (i < int(cellLayout.size())) && (j < (int)cellLayout[i].size())) {// Making sure that cell exists *****************
+
                 temp.x=int(SCREEN_WIDTH/2 - cellDim/2 + (j-pPosJ)*cellDim); //Centered on the player
                 temp.y=int(SCREEN_HEIGHT/2 - cellDim/2 + (i-pPosI)*cellDim);
                 temp.w=cellDim;
                 temp.h=cellDim;
+
                 switch (cellLayout[i][j].type){
     //                case 0:
     //                    SDL_RenderCopy(renderer, assets[0], NULL, &temp);
     //                    break;
                     case 1:
-                        if (inSight(cellLayout[pPosI][pPosJ], cellLayout[i][j], playerVIS)&&(!checkForWallsBetween(cellLayout[pPosI][pPosJ], cellLayout[i][j])))
-                        {
+                        if (inSight(cellLayout[pPosI][pPosJ], cellLayout[i][j], playerVIS)&&(!checkForWallsBetween(cellLayout[pPosI][pPosJ], cellLayout[i][j]))) {
                             SDL_RenderCopy(renderer, assets[1], NULL, &temp);
                             cellLayout[i][j].seen=1;
-                        }
-                        else
-                        {
-                            if (cellLayout[i][j].seen==1) SDL_RenderCopy(renderer, assets[6], NULL, &temp);
-                        }
+                        } else if (cellLayout[i][j].seen==1) SDL_RenderCopy(renderer, assets[6], NULL, &temp);
                         break;
-
-
-
                     case 2:
-                        if (inSight(cellLayout[pPosI][pPosJ], cellLayout[i][j], playerVIS)&&(!checkForWallsBetween(cellLayout[pPosI][pPosJ], cellLayout[i][j])))
-                        {
+                        if (inSight(cellLayout[pPosI][pPosJ], cellLayout[i][j], playerVIS)&&(!checkForWallsBetween(cellLayout[pPosI][pPosJ], cellLayout[i][j]))) {
                             SDL_RenderCopy(renderer, assets[2], NULL, &temp);
                             cellLayout[i][j].seen=1;
-                        }
-                        else
-                        {
-                            if (cellLayout[i][j].seen==1) SDL_RenderCopy(renderer, assets[7], NULL, &temp);
-                        }
+                        } else if (cellLayout[i][j].seen==1) SDL_RenderCopy(renderer, assets[7], NULL, &temp);
                         break;
-
-
 
                     case 3:
-                        if (inSight(cellLayout[pPosI][pPosJ], cellLayout[i][j], playerVIS)&&(!checkForWallsBetween(cellLayout[pPosI][pPosJ], cellLayout[i][j])))
-                        {
+                        if (inSight(cellLayout[pPosI][pPosJ], cellLayout[i][j], playerVIS)&&(!checkForWallsBetween(cellLayout[pPosI][pPosJ], cellLayout[i][j]))) {
                             SDL_RenderCopy(renderer, assets[3], NULL, &temp);
                             cellLayout[i][j].seen=1;
-                        }
-                        else
-                        {
-                            if (cellLayout[i][j].seen==1) SDL_RenderCopy(renderer, assets[3], NULL, &temp);
-                        }
+                        } else if (cellLayout[i][j].seen==1) SDL_RenderCopy(renderer, assets[3], NULL, &temp);
                         break;
-
-
 
                     case 4:
-                        if (inSight(cellLayout[pPosI][pPosJ], cellLayout[i][j], playerVIS)&&(!checkForWallsBetween(cellLayout[pPosI][pPosJ], cellLayout[i][j])))
-                        {
+                        if (inSight(cellLayout[pPosI][pPosJ], cellLayout[i][j], playerVIS)&&(!checkForWallsBetween(cellLayout[pPosI][pPosJ], cellLayout[i][j]))) {
                             SDL_RenderCopy(renderer, assets[4], NULL, &temp);
                             cellLayout[i][j].seen=1;
-                        }
-                        else
-                        {
-                            if (cellLayout[i][j].seen==1) SDL_RenderCopy(renderer, assets[6], NULL, &temp);
-                        }
+                        } else if (cellLayout[i][j].seen==1) SDL_RenderCopy(renderer, assets[6], NULL, &temp);
                         break;
 
-
-
                     case 5:
-                        if (inSight(cellLayout[pPosI][pPosJ], cellLayout[i][j], playerVIS)&&(!checkForWallsBetween(cellLayout[pPosI][pPosJ], cellLayout[i][j])))
-                        {
+                        if (inSight(cellLayout[pPosI][pPosJ], cellLayout[i][j], playerVIS)&&(!checkForWallsBetween(cellLayout[pPosI][pPosJ], cellLayout[i][j]))) {
                             SDL_RenderCopy(renderer, assets[5], NULL, &temp);
                             cellLayout[i][j].seen=1;
-                        }
-                        else
-                        {
-                            if (cellLayout[i][j].seen==1) SDL_RenderCopy(renderer, assets[5], NULL, &temp);
-                        }
+                        } else if (cellLayout[i][j].seen==1) SDL_RenderCopy(renderer, assets[5], NULL, &temp);
                         break;
                 }
 
             }
         }
     }
+
+    DrawHPBar(player.health * 1.0, 10, window, renderer);
     SDL_RenderPresent(renderer);
 }
 
@@ -599,16 +567,7 @@ void pMoveSW(entity &ent){
 
 // To be made into separate functions (e.g. getTypeXY or getHealthXY) to save time importing other unnecessary stats
 cell getCellAtXY(int x, int y){
-    int j = int( x / cellDim );
-    int i = int( y / cellDim );
-    cell temp;
-    temp.seen = cellLayout[i][j].seen;
-    temp.I = cellLayout[i][j].I;
-    temp.J = cellLayout[i][j].J;
-    temp.type = cellLayout[i][j].type;
-    temp.x = cellLayout[i][j].x;
-    temp.y = cellLayout[i][j].y;
-    return temp;
+    return cellLayout[int(y / cellDim)][int(x / cellDim)];
 }
 
 int getTypeAtXY(int x, int y){
@@ -728,7 +687,7 @@ void NPCMove(entity &ent){
     if (ent.agitated) {
         if ((abs(ent.J-player.J)<=1)&&(abs(ent.I-player.I)<=1))// Attack range to be added in place of "1"
         {
-            NPCAttack(ent);
+            Attack(ent, player);
             return;
         }
         else moveToLastSeen(ent);
@@ -829,16 +788,12 @@ void moveRandom(entity &ent)
     }
 }
 
-void NPCAttack(const entity &ent)
-{
-    winCon =-1;
+void Attack(const entity &attacker, entity& defender) {
+    defender.health -= attacker.damage;
 }
 
-//**************************************************************
+//------------------------------
 void DrawHPBar(float CurrentHP, float MaxHP, SDL_Window* window, SDL_Renderer* renderer) {
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);   //background color
-    SDL_RenderClear(renderer);
-
     float percentage = CurrentHP / MaxHP;
 
     const int BarWidth = 200;
@@ -854,9 +809,44 @@ void DrawHPBar(float CurrentHP, float MaxHP, SDL_Window* window, SDL_Renderer* r
     for (int i = BarHeight; i < BarHeight + BarThickness; i++) SDL_RenderDrawLine(renderer, 0, i, BarWidth - BarHeight, i);
     for (int i = BarWidth - BarThickness / 2; i <= BarWidth + BarThickness / 2; i++) SDL_RenderDrawLine(renderer, i, 0, i - BarHeight, BarHeight + BarThickness - 1);
 
-    for (int i = BarThickness + BarGap; i < BarHeight - BarGap; i++) SDL_RenderDrawLine(renderer, BarThickness + BarGap, i, percentage * (BarWidth - BarGap - i - BarThickness/2 - (BarThickness + BarGap)) + (BarThickness + BarGap), i);
+    // Fill hp bar relative to current hp percentage
+    for (int i = BarThickness + BarGap; i < BarHeight - BarGap; i++)
+        SDL_RenderDrawLine(renderer, BarThickness + BarGap, i,
+                           percentage * (BarWidth - BarGap - i - BarThickness/2 - (BarThickness + BarGap)) + (BarThickness + BarGap), i);
+
+//    int TextSize = 24;
+//    TTF_Font* TextFont = TTF_OpenFont("fonts\PixelifySans-Regular.ttf", TextSize);
+//    SDL_Color TempColor = {255, 255, 255, 255};
+//
+//    SDL_Surface* surfaceMessage = TTF_RenderText_Solid(TextFont, "test", TempColor);
+//
+//    SDL_Texture* Message = SDL_CreateTextureFromSurface(renderer, surfaceMessage);
+//
+//    SDL_Rect temp;
+//    temp.x = 0;
+//    temp.y = 0;
+//    temp.w = surfaceMessage->w;
+//    temp.h = surfaceMessage->h;
+//    SDL_RenderCopy(renderer, Message, NULL, &temp);
+
+//    SDL_FreeSurface(surfaceMessage);
+//    SDL_DestroyTexture(Message);
+
+//    string inptext = "test";// + std::to_string(score);
+//    SDL_Color textColor = { 255, 255, 255, 255 };
+//    SDL_Surface* textSurface = TTF_RenderText_Solid(Sans, inptext.c_str(), textColor);
+//    SDL_Texture* text = SDL_CreateTextureFromSurface(renderer, textSurface);
+//
+//    int text_width = textSurface->w;
+//    int text_height = textSurface->h;
+//    SDL_Rect renderQuad = { 0, 0, text_width, text_height };
+//    SDL_RenderCopy(renderer, text, NULL, &renderQuad);
+//
+//    SDL_DestroyTexture(text);
+//    SDL_FreeSurface(textSurface);
 
     SDL_RenderPresent(renderer);
     return;
 }
 
+//bool CheckEntityAlive(entity )
