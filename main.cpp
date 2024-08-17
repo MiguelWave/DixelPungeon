@@ -7,15 +7,12 @@
 
 using namespace std;
 
-//struct button{
-//    int x;
-//    int y;
-//    int w;
-//    int h;
-//    SDL_Texture* Idle;
-//    SDL_Texture* Selected;
-//
-//};
+const int NumberOfMapFiles = 1;
+int CurrentMap = 0;
+bool Used[NumberOfMapFiles];
+
+
+int GameStage = 0; //0. menu 1.game 2.inventory 3.gameover 4. win
 
 //Elements
 int winCon = 0; //-1 means loss, 0 means game cancelled, 1 means win
@@ -24,13 +21,13 @@ int playerVIS = 5;
 int entityVIS = 3;
 int renderDistance = 12;
 
-
 vector<vector<cell>> cellLayout;
+vector<vector<vector<cell>>> Maps;
 vector<entity> listOfEntities; // Also works as a turn base
 entity player;
 
 void RenderGame(SDL_Window* window, SDL_Renderer* renderer);
-void importLayout(const string &path);
+void GenerateMap();
 
 
 // Player movement
@@ -46,12 +43,13 @@ void pMoveSW(entity &ent);
 
 cell getCellAtXY(int x, int y);
 int getTypeAtXY(int x, int y);
-bool inSight(const cell &a, const cell &b, int VIS);
+bool IsWithinVision(const cell &a, const cell &b, int VIS);
 bool checkForWallsBetween(const cell &a, const cell &b);
 
 
 void RenderMenu(SDL_Window* window, SDL_Renderer* renderer, const int& SelectorPosition);
 void RenderGameOver(SDL_Window* window, SDL_Renderer* renderer);
+void RenderWin(SDL_Window* window, SDL_Renderer* renderer);
 SDL_Texture* loadTexture(const string &file, SDL_Renderer *ren);
 
 void NPCMove(entity &ent);
@@ -65,184 +63,215 @@ void DrawHPBar(float CurrentHP, float MaxHP, SDL_Window* window, SDL_Renderer* r
 vector<SDL_Texture*> assets;
 vector<SDL_Texture*> MenuAssets;
 SDL_Texture* GameOver;
-
-int main(int argc, char* argv[])
-{
-    // Window initialization
-    SDL_Window* window;
-    SDL_Renderer* renderer;
-    initSDL(window, renderer);
-
-    // Event variable
-    SDL_Event e;
-
-    // Importing map
-    importLayout(mapFile);
-
-    if (cellLayout.size()==0){
-        cout<<"No map detected";
-        return 0;
-    }
-
-    // Importing graphics
-    assets.push_back(loadTexture("Assets/space.bmp", renderer));
-    assets.push_back(loadTexture("Assets/floor1.bmp", renderer));
-    assets.push_back(loadTexture("Assets/wall.bmp", renderer));
-    assets.push_back(loadTexture("Assets/player.bmp", renderer));
-    assets.push_back(loadTexture("Assets/enemy.bmp", renderer));
-    assets.push_back(loadTexture("Assets/exit.bmp", renderer));
-    assets.push_back(loadTexture("Assets/floor2.bmp", renderer));
-    assets.push_back(loadTexture("Assets/wall2.bmp", renderer));
-
-    MenuAssets.push_back(loadTexture("Assets/title.PNG", renderer));
-    MenuAssets.push_back(loadTexture("Assets/start.PNG", renderer));
-    MenuAssets.push_back(loadTexture("Assets/settings.PNG", renderer));
-    MenuAssets.push_back(loadTexture("Assets/quit.PNG", renderer));
-    MenuAssets.push_back(loadTexture("Assets/selector.PNG", renderer));
-
-    GameOver = loadTexture("Assets/game_over.PNG", renderer);
+SDL_Texture* Win;
 
 
-    int GameStage = 0; //0. menu 1.game 2.inventory 3.gameover
-    int Selector = 1;
 
-    // Render
-
-    while (1) {
-        if (GameStage == 0) {
-            RenderMenu(window, renderer, Selector);
-
-//             Idling
-            SDL_Delay(10);
-            if ( SDL_WaitEvent(&e) == 0) continue;
-
-//             Exit via closing window
-            if (e.type == SDL_QUIT) break;
-
-            // Event of user input
-            if (e.type == SDL_KEYDOWN) {
-                if (e.key.keysym.sym == SDLK_RETURN) {
-                    switch (Selector) {
-                    case 1:
-                        GameStage = 1;
-                        break;
-                    case 2:
-                        break;
-                    case 3:
-                        return 0;
-                    }
-                } else if (e.key.keysym.sym == SDLK_w || e.key.keysym.sym == SDLK_UP) {
-                    if (Selector > 1) Selector--;
-                    RenderMenu(window, renderer, Selector);
-                } else if (e.key.keysym.sym == SDLK_s || e.key.keysym.sym == SDLK_DOWN) {
-                    if (Selector < 3) Selector++;
-                    RenderMenu(window, renderer, Selector);
-                }
-            }
-        } else if (GameStage == 1) {
-            RenderGame(window, renderer);
-            // Idling
-            SDL_Delay(10);
-            if ( SDL_WaitEvent(&e) == 0) continue;
-
-            // Exit via big red X
-            if (e.type == SDL_QUIT) break;
-
-            // Player input analyzation
-            if (e.type == SDL_KEYDOWN) {
-                bool playermoved = false;
-                if (e.key.keysym.sym == SDLK_ESCAPE) break;     // Exit via ESC
-                else switch (e.key.keysym.sym) {
-                case SDLK_a:
-                    playermoved = 1;
-                    pMoveW(player);
-                    break;
-                case SDLK_d:
-                    playermoved = 1;
-                    pMoveE(player);
-                    break;
-                case SDLK_s:
-                    playermoved = 1;
-                    pMoveS(player);
-                    break;
-                case SDLK_w:
-                    playermoved = 1;
-                    pMoveN(player);
-                    break;
-                case SDLK_e:
-                    playermoved = 1;
-                    pMoveNE(player);
-                    break;
-                case SDLK_q:
-                    playermoved = 1;
-                    pMoveNW(player);
-                    break;
-                case SDLK_c:
-                    playermoved = 1;
-                    pMoveSE(player);
-                    break;
-                case SDLK_z:
-                    playermoved = 1;
-                    pMoveSW(player);
-                    break;
-                case SDLK_SPACE:
-                    playermoved = 1;
-                    break;
-                }
-                if (playermoved) for (int i = 0; i < (int)listOfEntities.size(); i++) NPCMove(listOfEntities[i]);
-                RenderGame(window, renderer);
-            }
-            // Check win condition
-            if (player.health <= 0) winCon = -1;
-            if (winCon!=0)   GameStage = 3;
-        } else if (GameStage == 3) {
-            RenderGameOver(window, renderer);
-            if ( SDL_WaitEvent(&e) == 0) continue;
-
-            // Exit via closing window
-            if (e.type == SDL_QUIT) break;
-
-            // Event of user input
-            if (e.type == SDL_KEYDOWN) break;
-        }
-
-    }
-    switch (winCon){
-        case -1:
-            cout<<"Game over! Better luck next time.";
-            break;
-        case 0:
-            cout<<"Game cancelled";
-            break;
-        case 1:
-            cout<<"Congratulations, you win!";
-            break;
-    }
-
+//----------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
+int main(int argc, char* argv[]){
+//    // Window initialization
+//    SDL_Window* window;
+//    SDL_Renderer* renderer;
+//    initSDL(window, renderer);
+//
+//    // Event variable
+//    SDL_Event e;
+//
+//    // Importing map
+//    for (int i = 0; i < NumberOfMapFiles; i++) {
+//        Used[i] = false;
+//    }
+//    GenerateMap();
+//    if (Maps.size() == 0){
+//        cout<<"No map detected";
+//        return 0;
+//    }
+//
+//    // Importing graphics
+//    assets.push_back(loadTexture("Assets/space.bmp", renderer));
+//    assets.push_back(loadTexture("Assets/floor1.bmp", renderer));
+//    assets.push_back(loadTexture("Assets/wall.bmp", renderer));
+//    assets.push_back(loadTexture("Assets/player.bmp", renderer));
+//    assets.push_back(loadTexture("Assets/enemy.bmp", renderer));
+//    assets.push_back(loadTexture("Assets/exit.bmp", renderer));
+//    assets.push_back(loadTexture("Assets/floor2.bmp", renderer));
+//    assets.push_back(loadTexture("Assets/wall2.bmp", renderer));
+//
+//    MenuAssets.push_back(loadTexture("Assets/title.PNG", renderer));
+//    MenuAssets.push_back(loadTexture("Assets/start.PNG", renderer));
+//    MenuAssets.push_back(loadTexture("Assets/settings.PNG", renderer));
+//    MenuAssets.push_back(loadTexture("Assets/quit.PNG", renderer));
+//    MenuAssets.push_back(loadTexture("Assets/selector.PNG", renderer));
+//
+//    GameOver = loadTexture("Assets/game_over.PNG", renderer);
+//    Win = loadTexture("Assets/win.PNG", renderer);
+//
+//    int Selector = 1;
+//
+//    // Render
+//    while (1) {
+//        if (GameStage == 0) {
+//            RenderMenu(window, renderer, Selector);
+//
+////             Idling
+//            SDL_Delay(10);
+//            if ( SDL_WaitEvent(&e) == 0) continue;
+//
+////             Exit via closing window
+//            if (e.type == SDL_QUIT) break;
+//
+//            // Event of user input
+//            if (e.type == SDL_KEYDOWN) {
+//                if (e.key.keysym.sym == SDLK_RETURN) {
+//                    switch (Selector) {
+//                    case 1:
+//                        GameStage = 1;
+//                        break;
+//                    case 2:
+//                        break;
+//                    case 3:
+//                        return 0;
+//                    }
+//                } else if (e.key.keysym.sym == SDLK_w || e.key.keysym.sym == SDLK_UP) {
+//                    if (Selector > 1) Selector--;
+//                    RenderMenu(window, renderer, Selector);
+//                } else if (e.key.keysym.sym == SDLK_s || e.key.keysym.sym == SDLK_DOWN) {
+//                    if (Selector < 3) Selector++;
+//                    RenderMenu(window, renderer, Selector);
+//                }
+//            }
+//        } else if (GameStage == 1) {
+//            RenderGame(window, renderer);
+//            // Idling
+//            SDL_Delay(10);
+//            if ( SDL_WaitEvent(&e) == 0) continue;
+//
+//            // Exit via big red X
+//            if (e.type == SDL_QUIT) break;
+//
+//            // Player input analyzation
+//            if (e.type == SDL_KEYDOWN) {
+//                bool playermoved = false;
+//                if (e.key.keysym.sym == SDLK_ESCAPE) break;     // Exit via ESC
+//                else switch (e.key.keysym.sym) {
+//                case SDLK_a:
+//                    playermoved = 1;
+//                    pMoveW(player);
+//                    break;
+//                case SDLK_d:
+//                    playermoved = 1;
+//                    pMoveE(player);
+//                    break;
+//                case SDLK_s:
+//                    playermoved = 1;
+//                    pMoveS(player);
+//                    break;
+//                case SDLK_w:
+//                    playermoved = 1;
+//                    pMoveN(player);
+//                    break;
+//                case SDLK_e:
+//                    playermoved = 1;
+//                    pMoveNE(player);
+//                    break;
+//                case SDLK_q:
+//                    playermoved = 1;
+//                    pMoveNW(player);
+//                    break;
+//                case SDLK_c:
+//                    playermoved = 1;
+//                    pMoveSE(player);
+//                    break;
+//                case SDLK_z:
+//                    playermoved = 1;
+//                    pMoveSW(player);
+//                    break;
+//                case SDLK_SPACE:
+//                    playermoved = 1;
+//                    break;
+//                }
+//                if (playermoved) for (int i = 0; i < (int)listOfEntities.size(); i++) NPCMove(listOfEntities[i]);
+//                RenderGame(window, renderer);
+//            }
+//            // Check win condition
+//            if (player.health <= 0) winCon = -1;
+//            if (CurrentMap == NumberOfMapFiles - 1) winCon = 1;
+//
+//            if (winCon == -1)   GameStage = 3;
+//            else if (winCon == 1)   GameStage = 4;
+//        } else if (GameStage == 3) {
+//            RenderGameOver(window, renderer);
+//            if (SDL_WaitEvent(&e) == 0) continue;
+//
+//            // Exit via closing window
+//            if (e.type == SDL_QUIT) break;
+//
+//            // Event of user input
+//            if (e.type == SDL_KEYDOWN) break;
+//        } else if (GameStage == 4) {
+//            RenderWin(window, renderer);
+//            if (SDL_WaitEvent(&e) == 0) continue;
+//
+//            // Exit via closing window
+//            if (e.type == SDL_QUIT) break;
+//
+//            // Event of user input
+//            if (e.type == SDL_KEYDOWN) break;
+//        }
+//
+//    }
+//    switch (winCon) {
+//        case -1:
+//            cout<<"Game over! Better luck next time.";
+//            break;
+//        case 0:
+//            cout<<"Game cancelled";
+//            break;
+//        case 1:
+//            cout<<"Congratulations, you win!";
+//            break;
+//    }
     return 0;
 }
+//----------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------
 
-void importLayout(const string &path){
+
+// CHECKED!!!!!
+void GenerateMap(){
+    vector<vector<cell>> NewMap;
+
+    // Get random map
+    string path = "maps/map";
+    srand((unsigned) time(NULL));
+    int random = rand() % NumberOfMapFiles;
+    while (Used[random]) random = rand() % NumberOfMapFiles;
+    path += to_string(random);
+    path += ".txt";
+    Used[random] = true;
+
+    // Input from file
     string line;
-    int i=0;
+    int i = 0;
     ifstream inpfile(path);
-
+    cell temp;
 
     while (!inpfile.eof()){
-        getline(inpfile, line);
         // Add a new line to the internal layout
-        cellLayout.push_back(vector<cell>());
+        getline(inpfile, line);
+        NewMap.push_back(vector<cell>());
 
-        //Analyzing line i
-        for (int j=0; j<int (line.length()); ++j){
-            cell temp;
+        for (int j = 0; j < int(line.length()); ++j){
             //Coordinates
-            temp.x =   ( cellDim   ) * j;
-            temp.y =   ( cellDim  ) * i;
+            temp.x = cellDim * j;
+            temp.y = cellDim * i;
 
             // Internal coordinates
-            temp.I=i;
-            temp.J=j;
+            temp.I = i;
+            temp.J = j;
 
             //Determining cell type
             switch (line[j]){
@@ -256,31 +285,36 @@ void importLayout(const string &path){
                     temp.type=3;
                     player.I=temp.I;
                     player.J=temp.J;
-                    player.agitated=0;
-                    player.VIS = playerVIS;
+                    player.agitated=0; //????
+                    player.VIS = playerVIS; // To be modified
                     break;
                 case 'E':{
                     temp.type=4;
-                    entity temp2;
-                    temp2.I=temp.I;
-                    temp2.J=temp.J;
-                    temp2.agitated = 0;
-                    temp2.VIS=entityVIS;
-                    listOfEntities.push_back(temp2);
+                    entity NewEnt;
+                    NewEnt.I=temp.I;
+                    NewEnt.J=temp.J;
+                    NewEnt.agitated = 0;
+                    NewEnt.VIS=entityVIS;
+                    listOfEntities.push_back(NewEnt);
                     break;
                 }
                 case 'O':
                     temp.type=5;
                     break;
             }
-            cellLayout[i].push_back(temp);
+            NewMap[i].push_back(temp);
         }
         i++;//Number of lines in the internal layout
     }
     inpfile.close();
+    Maps.push_back(NewMap);
 }
 
+
+//----------------------------------------------------------------------------------------------------------------------
 //---Game Rendering---
+//----------------------------------------------------------------------------------------------------------------------
+
 void RenderMenu(SDL_Window* window, SDL_Renderer* renderer, const int& SelectorPosition) {
     //Clear screen
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);   //background color
@@ -295,39 +329,42 @@ void RenderMenu(SDL_Window* window, SDL_Renderer* renderer, const int& SelectorP
     SDL_RenderCopy(renderer, MenuAssets[0], NULL, &temp);
 
     // Rendering Start button
-    temp.x = 400;
-    temp.y = 250;
-    temp.w = SCREEN_WIDTH - 2 * temp.x;
-    temp.h = 100;
-    SDL_RenderCopy(renderer, MenuAssets[1], NULL, &temp);
+    SDL_Rect Start;
+    Start.x = 500;
+    Start.y = 250;
+    Start.w = SCREEN_WIDTH - 2 * Start.x;
+    Start.h = 100;
+    SDL_RenderCopy(renderer, MenuAssets[1], NULL, &Start);
 
     // Rendering Settings button
-    temp.x = 350;
-    temp.y = 400;
-    temp.w = SCREEN_WIDTH - 2 * temp.x;
-    temp.h = 100;
-    SDL_RenderCopy(renderer, MenuAssets[2], NULL, &temp);
+    SDL_Rect Settings;
+    Settings.x = 500;
+    Settings.y = 400;
+    Settings.w = SCREEN_WIDTH - 2 * Settings.x;
+    Settings.h = 100;
+    SDL_RenderCopy(renderer, MenuAssets[2], NULL, &Settings);
 
     // Rendering Quit button
-    temp.x = 400;
-    temp.y = 550;
-    temp.w = SCREEN_WIDTH - 2 * temp.x;
-    temp.h = 100;
-    SDL_RenderCopy(renderer, MenuAssets[3], NULL, &temp);
+    SDL_Rect Quit;
+    Quit.x = 550;
+    Quit.y = 550;
+    Quit.w = SCREEN_WIDTH - 2 * Quit.x;
+    Quit.h = 100;
+    SDL_RenderCopy(renderer, MenuAssets[3], NULL, &Quit);
 
     // Rendering Selector
     switch (SelectorPosition) {
     case 1:
-        temp.x = 300;
-        temp.y = 250;
+        temp.x = Start.x - 100;
+        temp.y = Start.y;
         break;
     case 2:
-        temp.x = 250;
-        temp.y = 400;
+        temp.x = Settings.x - 100;
+        temp.y = Settings.y;
         break;
     case 3:
-        temp.x = 300;
-        temp.y = 550;
+        temp.x = Quit.x - 100;
+        temp.y = Quit.y;
     }
     temp.w = 50;
     temp.h = 100;
@@ -335,67 +372,61 @@ void RenderMenu(SDL_Window* window, SDL_Renderer* renderer, const int& SelectorP
     SDL_RenderPresent(renderer);
 }
 
-void RenderGame(SDL_Window* window, SDL_Renderer* renderer) {
-    int pPosI = player.I;
-    int pPosJ = player.J;
 
+// CHECKED!!!!!
+void RenderGame(SDL_Window* window, SDL_Renderer* renderer) {
     //Clear screen
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);   //background color
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);   // background color: black
     SDL_RenderClear(renderer);
 
-    //Redrawing the entire thing from scratch
+    // Cell check variables
+    bool CellIsVisible;
+    int AssetID;
     SDL_Rect temp;
-    for (int i = player.I - renderDistance; i < player.I + renderDistance; ++i){
+
+    //Redrawing the entire thing from scratch
+    for (int i = player.I - renderDistance; i < player.I + renderDistance; ++i)
         for (int j = player.J - renderDistance; j < player.J + renderDistance; ++j) {// Only render from a certain number of cells away
-            if ((i >= 0) && (j >= 0) && (i < int(cellLayout.size())) && (j < (int)cellLayout[i].size())) {// Making sure that cell exists *****************
+            if ((i >= 0) && (j >= 0)
+                && (i < int(Maps[CurrentMap].size()))
+                && (j < int(Maps[CurrentMap][i].size()))) continue;// Only render cells in map boundaries
 
-                temp.x=int(SCREEN_WIDTH/2 - cellDim/2 + (j-pPosJ)*cellDim); //Centered on the player
-                temp.y=int(SCREEN_HEIGHT/2 - cellDim/2 + (i-pPosI)*cellDim);
-                temp.w=cellDim;
-                temp.h=cellDim;
+            temp.x = int(SCREEN_WIDTH/2 - cellDim/2 + (j-player.J)*cellDim); //Centered on the player
+            temp.y = int(SCREEN_HEIGHT/2 - cellDim/2 + (i-player.I)*cellDim);
+            temp.w = cellDim;
+            temp.h = cellDim;
 
-                switch (cellLayout[i][j].type){
-    //                case 0:
-    //                    SDL_RenderCopy(renderer, assets[0], NULL, &temp);
-    //                    break;
-                    case 1:
-                        if (inSight(cellLayout[pPosI][pPosJ], cellLayout[i][j], playerVIS)&&(!checkForWallsBetween(cellLayout[pPosI][pPosJ], cellLayout[i][j]))) {
-                            SDL_RenderCopy(renderer, assets[1], NULL, &temp);
-                            cellLayout[i][j].seen=1;
-                        } else if (cellLayout[i][j].seen==1) SDL_RenderCopy(renderer, assets[6], NULL, &temp);
-                        break;
-                    case 2:
-                        if (inSight(cellLayout[pPosI][pPosJ], cellLayout[i][j], playerVIS)&&(!checkForWallsBetween(cellLayout[pPosI][pPosJ], cellLayout[i][j]))) {
-                            SDL_RenderCopy(renderer, assets[2], NULL, &temp);
-                            cellLayout[i][j].seen=1;
-                        } else if (cellLayout[i][j].seen==1) SDL_RenderCopy(renderer, assets[7], NULL, &temp);
-                        break;
+            CellIsVisible = (IsWithinVision(Maps[CurrentMap][player.I][player.J], Maps[CurrentMap][i][j], playerVIS)
+                    && (!checkForWallsBetween(Maps[CurrentMap][player.I][player.J], Maps[CurrentMap][i][j])));
+            AssetID = 0;
 
-                    case 3:
-                        if (inSight(cellLayout[pPosI][pPosJ], cellLayout[i][j], playerVIS)&&(!checkForWallsBetween(cellLayout[pPosI][pPosJ], cellLayout[i][j]))) {
-                            SDL_RenderCopy(renderer, assets[3], NULL, &temp);
-                            cellLayout[i][j].seen=1;
-                        } else if (cellLayout[i][j].seen==1) SDL_RenderCopy(renderer, assets[3], NULL, &temp);
-                        break;
-
-                    case 4:
-                        if (inSight(cellLayout[pPosI][pPosJ], cellLayout[i][j], playerVIS)&&(!checkForWallsBetween(cellLayout[pPosI][pPosJ], cellLayout[i][j]))) {
-                            SDL_RenderCopy(renderer, assets[4], NULL, &temp);
-                            cellLayout[i][j].seen=1;
-                        } else if (cellLayout[i][j].seen==1) SDL_RenderCopy(renderer, assets[6], NULL, &temp);
-                        break;
-
-                    case 5:
-                        if (inSight(cellLayout[pPosI][pPosJ], cellLayout[i][j], playerVIS)&&(!checkForWallsBetween(cellLayout[pPosI][pPosJ], cellLayout[i][j]))) {
-                            SDL_RenderCopy(renderer, assets[5], NULL, &temp);
-                            cellLayout[i][j].seen=1;
-                        } else if (cellLayout[i][j].seen==1) SDL_RenderCopy(renderer, assets[5], NULL, &temp);
-                        break;
-                }
-
+            switch (Maps[CurrentMap][i][j].type){
+//            case 0:
+//                to be added: background elements
+            case 1:
+                if (CellIsVisible) AssetID = 1;
+                else if (Maps[CurrentMap][i][j].seen) AssetID = 6;
+                break;
+            case 2:
+                if (CellIsVisible) AssetID = 2;
+                else if (Maps[CurrentMap][i][j].seen) AssetID = 7;
+                break;
+            case 3:
+                AssetID = 3; // To be added: render floor then render player
+                break;
+            case 4:
+                if (CellIsVisible) AssetID = 4;
+                else if (Maps[CurrentMap][i][j].seen) AssetID = 6;
+                break;
+            case 5:
+//                if (CellIsVisible)
+                    AssetID = 5; // Since we only have 1 asset for the exit, to be added later
+//                else if (Maps[CurrentMap][i][j].seen) AssetID = 5;
+                break;
             }
+            if (AssetID != 0) SDL_RenderCopy(renderer, assets[AssetID], NULL, &temp);
+            if (CellIsVisible) Maps[CurrentMap][i][j].seen = 1;
         }
-    }
 
     DrawHPBar(player.health * 1.0, 10, window, renderer);
     SDL_RenderPresent(renderer);
@@ -415,26 +446,53 @@ void RenderGameOver(SDL_Window* window, SDL_Renderer* renderer) {
     SDL_RenderCopy(renderer, GameOver, NULL, &temp);
     SDL_RenderPresent(renderer);
 }
+
+void RenderWin(SDL_Window* window, SDL_Renderer* renderer) {
+    //Clear screen
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);   //background color
+    SDL_RenderClear(renderer);
+
+    // Rendering title
+    SDL_Rect temp;
+    temp.x = 200;
+    temp.y = 100;
+    temp.w = SCREEN_WIDTH - 2 * temp.x;
+    temp.h = 100;
+    SDL_RenderCopy(renderer, Win, NULL, &temp);
+    SDL_RenderPresent(renderer);
+}
 //----------
 // Swap cells
 void swapCells(cell &from, cell &to)
 {
     cell temp;
-    temp.type = from.type; from.type = to.type; to.type = temp.type;
+    temp.type = from.type;
+    from.type = to.type;
+    to.type = temp.type;
 }
+
+void NextMap(){
+    CurrentMap++;
+    listOfEntities.clear();
+    if (CurrentMap == NumberOfMapFiles) GameStage = 4;
+    else GenerateMap();
+
+}
+
+
 
 //Movement
 void pMoveW(entity &ent){
     int i=ent.I;
     int j=ent.J;
 
-    switch (cellLayout[i][j-1].type){
+    switch (Maps[CurrentMap][i][j-1].type){
     case 1:
-        swapCells(cellLayout[i][j], cellLayout[i][j-1]);
+        swapCells(Maps[CurrentMap][i][j], Maps[CurrentMap][i][j-1]);
         ent.J--;
         break;
     case 5:
-        winCon=1;
+        NextMap();
         break;
     case 4:
         winCon=-1;
@@ -445,13 +503,13 @@ void pMoveE(entity &ent){
     int i=ent.I;
     int j=ent.J;
 
-    switch (cellLayout[i][j+1].type){
+    switch (Maps[CurrentMap][i][j+1].type){
     case 1:
-        swapCells(cellLayout[i][j], cellLayout[i][j+1]);
+        swapCells(Maps[CurrentMap][i][j], Maps[CurrentMap][i][j+1]);
         ent.J++;
         break;
     case 5:
-        winCon=1;
+        NextMap();
         break;
     case 4:
         winCon=-1;
@@ -462,13 +520,13 @@ void pMoveN(entity &ent){
     int i=ent.I;
     int j=ent.J;
 
-    switch (cellLayout[i-1][j].type){
+    switch (Maps[CurrentMap][i-1][j].type){
     case 1:
-        swapCells(cellLayout[i][j], cellLayout[i-1][j]);
+        swapCells(Maps[CurrentMap][i][j], Maps[CurrentMap][i-1][j]);
         ent.I--;
         break;
     case 5:
-        winCon=1;
+        NextMap();
         break;
     case 4:
         winCon=-1;
@@ -479,13 +537,13 @@ void pMoveS(entity &ent){
     int i=ent.I;
     int j=ent.J;
 
-    switch (cellLayout[i+1][j].type){
+    switch (Maps[CurrentMap][i+1][j].type){
     case 1:
-        swapCells(cellLayout[i][j], cellLayout[i+1][j]);
+        swapCells(Maps[CurrentMap][i][j], Maps[CurrentMap][i+1][j]);
         ent.I++;
         break;
     case 5:
-        winCon=1;
+        NextMap();
         break;
     case 4:
         winCon=-1;
@@ -496,14 +554,14 @@ void pMoveNE(entity &ent){
     int i=ent.I;
     int j=ent.J;
 
-    switch (cellLayout[i-1][j+1].type){
+    switch (Maps[CurrentMap][i-1][j+1].type){
     case 1:
-        swapCells(cellLayout[i][j], cellLayout[i-1][j+1]);
+        swapCells(Maps[CurrentMap][i][j], Maps[CurrentMap][i-1][j+1]);
         ent.I--;
         ent.J++;
         break;
     case 5:
-        winCon=1;
+        NextMap();
         break;
     case 4:
         winCon=-1;
@@ -514,14 +572,14 @@ void pMoveSE(entity &ent){
     int i=ent.I;
     int j=ent.J;
 
-    switch (cellLayout[i+1][j+1].type){
+    switch (Maps[CurrentMap][i+1][j+1].type){
     case 1:
-        swapCells(cellLayout[i][j], cellLayout[i+1][j+1]);
+        swapCells(Maps[CurrentMap][i][j], Maps[CurrentMap][i+1][j+1]);
         ent.I++;
         ent.J++;
         break;
     case 5:
-        winCon=1;
+        NextMap();
         break;
     case 4:
         winCon=-1;
@@ -532,14 +590,14 @@ void pMoveNW(entity &ent){
     int i=ent.I;
     int j=ent.J;
 
-    switch (cellLayout[i-1][j-1].type){
+    switch (Maps[CurrentMap][i-1][j-1].type){
     case 1:
-        swapCells(cellLayout[i][j], cellLayout[i-1][j-1]);
+        swapCells(Maps[CurrentMap][i][j], Maps[CurrentMap][i-1][j-1]);
         ent.I--;
         ent.J--;
         break;
     case 5:
-        winCon=1;
+        NextMap();
         break;
     case 4:
         winCon=-1;
@@ -550,14 +608,14 @@ void pMoveSW(entity &ent){
     int i=ent.I;
     int j=ent.J;
 
-    switch (cellLayout[i+1][j-1].type){
+    switch (Maps[CurrentMap][i+1][j-1].type){
     case 1:
-        swapCells(cellLayout[i][j], cellLayout[i+1][j-1]);
+        swapCells(Maps[CurrentMap][i][j], Maps[CurrentMap][i+1][j-1]);
         ent.I++;
         ent.J--;
         break;
     case 5:
-        winCon=1;
+        NextMap();
         break;
     case 4:
         winCon=-1;
@@ -565,16 +623,20 @@ void pMoveSW(entity &ent){
     }
 }
 
+
+
+
+
 // To be made into separate functions (e.g. getTypeXY or getHealthXY) to save time importing other unnecessary stats
 cell getCellAtXY(int x, int y){
-    return cellLayout[int(y / cellDim)][int(x / cellDim)];
+    return Maps[CurrentMap][int(y / cellDim)][int(x / cellDim)];
 }
 
 int getTypeAtXY(int x, int y){
-    return cellLayout[int(y/cellDim)][int(x/cellDim)].type;
+    return Maps[CurrentMap][int(y/cellDim)][int(x/cellDim)].type;
 }
 
-bool inSight(const cell &a, const cell &b, int VIS){
+bool IsWithinVision(const cell &a, const cell &b, int VIS){
     if ((a.I-b.I)*(a.I-b.I) + (a.J-b.J)*(a.J-b.J) < (VIS*VIS)) return true;
     else return false;
 }
@@ -628,14 +690,14 @@ bool checkForWallsBetween(const cell &a, const cell &b)
     if (uY != 0)
     {
         // Determine the direction of the vector for initialization of shuttle variable
-        if (uY>0){
+        if (uY>0) {
             iY = a.y + cellDim; // iX will be running from the start of the next cell to the final side of the cell adjacent to the destination cell
         } else {
             iY = a.y - 1;
         }
 
         // Shuttling
-        while ( int(iY/cellDim) != b.I ) // While the current query variable isn't in the destination cell
+        while (int(iY/cellDim) != b.I) // While the current query variable isn't in the destination cell
         {
             // Determine X based on Y
             iX = int ( uX * ( iY - (a.y+cellDim/2) ) / uY + (a.x+cellDim/2) );
@@ -675,7 +737,7 @@ SDL_Texture* loadTexture(const string &file, SDL_Renderer *ren){
 //************************1.10: Enemy AI*****************************
 void NPCMove(entity &ent){
     // Check for player (before moving)
-    if ((inSight(cellLayout[ent.I][ent.J], cellLayout[player.I][player.J], ent.VIS)) && (!checkForWallsBetween(cellLayout[ent.I][ent.J],cellLayout[player.I][player.J]) ))
+    if ((IsWithinVision(Maps[CurrentMap][ent.I][ent.J], Maps[CurrentMap][player.I][player.J], ent.VIS)) && (!checkForWallsBetween(Maps[CurrentMap][ent.I][ent.J],Maps[CurrentMap][player.I][player.J]) ))
     {
         ent.agitated = 1;
         ent.chillOut = 0;
@@ -685,7 +747,7 @@ void NPCMove(entity &ent){
 
 
     if (ent.agitated) {
-        if ((abs(ent.J-player.J)<=1)&&(abs(ent.I-player.I)<=1))// Attack range to be added in place of "1"
+        if ((abs(ent.J - player.J) <= 1) && (abs(ent.I - player.I) <= 1))// Attack range to be added in place of "1"
         {
             Attack(ent, player);
             return;
@@ -700,7 +762,7 @@ void NPCMove(entity &ent){
     else moveRandom(ent);
 
     // Check for player (after moving)
-    if ((inSight(cellLayout[ent.I][ent.J], cellLayout[player.I][player.J], ent.VIS)) && (!checkForWallsBetween(cellLayout[ent.I][ent.J],cellLayout[player.I][player.J])))
+    if ((IsWithinVision(Maps[CurrentMap][ent.I][ent.J], Maps[CurrentMap][player.I][player.J], ent.VIS)) && (!checkForWallsBetween(Maps[CurrentMap][ent.I][ent.J],Maps[CurrentMap][player.I][player.J])))
     {
         ent.agitated = 1;
         ent.chillOut = 0;
@@ -722,9 +784,6 @@ void moveToLastSeen(entity &ent)
         return;
     }
 
-
-
-
     // Unit vectors of VTCP, used for 1 cell movement
     int iX;
     if (ent.J!=ent.lastSeenJ){
@@ -742,20 +801,20 @@ void moveToLastSeen(entity &ent)
 
 
     // Go in the direction of the last seen location
-    if (cellLayout[aY+iY][aX+iX].type==1)
+    if (Maps[CurrentMap][aY+iY][aX+iX].type==1)
     {
-        swapCells(cellLayout[aY+iY][aX+iX], cellLayout[aY][aX]);
+        swapCells(Maps[CurrentMap][aY+iY][aX+iX], Maps[CurrentMap][aY][aX]);
         ent.J+=iX;
         ent.I+=iY;
     }
-    else if (cellLayout[aY][aX+iX].type==1)
+    else if (Maps[CurrentMap][aY][aX+iX].type==1)
     {
-        swapCells(cellLayout[aY][aX+iX], cellLayout[aY][aX]);
+        swapCells(Maps[CurrentMap][aY][aX+iX], Maps[CurrentMap][aY][aX]);
         ent.J+=iX;
     }
-    else if (cellLayout[aY+iY][aX].type==1)
+    else if (Maps[CurrentMap][aY+iY][aX].type==1)
     {
-        swapCells(cellLayout[aY+iY][aX], cellLayout[aY][aX]);
+        swapCells(Maps[CurrentMap][aY+iY][aX], Maps[CurrentMap][aY][aX]);
         ent.I+=iY;
     }
     else
@@ -769,10 +828,10 @@ void moveRandom(entity &ent)
 {
     int randI = 1 - (rand() % 3); // 1, 0 or -1;
     int randJ = 1 - (rand() % 3);
-    switch (cellLayout[ent.I+randI][ent.J+randJ].type)
+    switch (Maps[CurrentMap][ent.I+randI][ent.J+randJ].type)
     {
         case 1:
-            swapCells(cellLayout[ent.I+randI][ent.J+randJ], cellLayout[ent.I][ent.J]);
+            swapCells(Maps[CurrentMap][ent.I+randI][ent.J+randJ], Maps[CurrentMap][ent.I][ent.J]);
             ent.I+=randI;
             ent.J+=randJ;
             break;
