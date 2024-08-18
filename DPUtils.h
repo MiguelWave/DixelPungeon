@@ -26,7 +26,7 @@ struct cell
 {
     int x;
     int y;
-    int type = 0; // 0 space 1 ground 2 wall 3 player 4 enemy 5 exit
+    int type = 0; // 0 space 1 ground 2 wall 3 player 4 slime 5 exit 6 sword
     int I; // Coordinates within the internal layout
     int J; // Coordinates within the internal layout
     bool seen = 0;

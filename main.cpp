@@ -7,7 +7,7 @@
 
 using namespace std;
 
-const int NumberOfMapFiles = 2;
+const int NumberOfMapFiles = 1;
 int CurrentMap = 0;
 bool Used[NumberOfMapFiles];
 
@@ -21,7 +21,6 @@ int playerVIS = 5;
 int entityVIS = 3;
 int renderDistance = 8;
 
-vector<vector<cell>> cellLayout;
 vector<vector<vector<cell>>> Maps;
 vector<entity> listOfEntities; // Also works as a turn base
 entity player;
@@ -29,10 +28,7 @@ entity player;
 void RenderGame(SDL_Window* window, SDL_Renderer* renderer);
 void GenerateMap();
 
-
-// Player movement
 void pMove(char input);
-
 
 cell getCellAtXY(int x, int y);
 int getTypeAtXY(int x, int y);
@@ -58,6 +54,17 @@ vector<SDL_Texture*> MenuAssets;
 SDL_Texture* GameOver;
 SDL_Texture* Win;
 
+void InitNewGame(){
+    // Clear player inventory
+    player.health = 10;
+    player.damage = 2;
+    CurrentMap = 0;
+    Maps.clear();
+    listOfEntities.clear();
+    for (int i = 0; i < NumberOfMapFiles; i++) Used[i] = false;
+    GenerateMap();
+    cout << "-----Initializing new game-----" << endl;
+}
 
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -72,34 +79,23 @@ int main(int argc, char* argv[]){
     // Event variable
     SDL_Event e;
 
-    // Importing map
-    for (int i = 0; i < NumberOfMapFiles; i++) {
-        Used[i] = false;
-    }
-    GenerateMap();
-    if (Maps.size() == 0){
-        cout<<"No map detected";
-        return 0;
-    }
-
-//    // Debugger
-//    for (int i = 0; i < Maps[0].size(); i++) {
-//        for (int j = 0; j < Maps[0][i].size(); j++) {
-//            if (Maps[0][i][j].type == 2 || Maps[0][i][j].type == 0) cout << "  ";
-//            else cout << Maps[0][i][j].type <<" ";
-//        }
-//        cout<<endl<<endl;
+    // InitializeMap
+//    if (Maps.size() == 0){
+//        cout<<"No map detected";
+//        return 0;
 //    }
 
+
     // Importing graphics
-    assets.push_back(loadTexture("Assets/space.bmp", renderer));
-    assets.push_back(loadTexture("Assets/floor1.bmp", renderer));
-    assets.push_back(loadTexture("Assets/wall.bmp", renderer));
-    assets.push_back(loadTexture("Assets/player.bmp", renderer));
-    assets.push_back(loadTexture("Assets/enemy.bmp", renderer));
-    assets.push_back(loadTexture("Assets/exit.bmp", renderer));
-    assets.push_back(loadTexture("Assets/floor2.bmp", renderer));
-    assets.push_back(loadTexture("Assets/wall2.bmp", renderer));
+    assets.push_back(loadTexture("Assets/space.bmp", renderer)); // 0 space
+    assets.push_back(loadTexture("Assets/floor1.bmp", renderer));// 1 floor
+    assets.push_back(loadTexture("Assets/wall.bmp", renderer));  // 2 wall
+    assets.push_back(loadTexture("Assets/player.bmp", renderer));// 3 player (placeholder)
+    assets.push_back(loadTexture("Assets/enemy.bmp", renderer)); // 4 slime (placeholder)
+    assets.push_back(loadTexture("Assets/exit.bmp", renderer));  // 5 exit
+    assets.push_back(loadTexture("Assets/floor2.bmp", renderer));// 6 floor (dark)
+    assets.push_back(loadTexture("Assets/wall2.bmp", renderer)); // 7 wall (dark
+    assets.push_back(loadTexture("Assets/Iron_Sword_JE2_BE2.png", renderer));// 8 sword
 
     MenuAssets.push_back(loadTexture("Assets/title.PNG", renderer));
     MenuAssets.push_back(loadTexture("Assets/start.PNG", renderer));
@@ -142,6 +138,7 @@ int main(int argc, char* argv[]){
                     switch (Selector) {
                     case 1:
                         GameStage = 1;
+                        InitNewGame();
                         break;
                     case 2:
                     // To be added: settings
@@ -346,7 +343,6 @@ void RenderGame(SDL_Window* window, SDL_Renderer* renderer) {
 
     // Cell check variables
     bool CellIsVisible;
-    int AssetID;
     SDL_Rect temp;
 
     //Redrawing the entire thing from scratch
@@ -363,40 +359,38 @@ void RenderGame(SDL_Window* window, SDL_Renderer* renderer) {
 
             CellIsVisible = (IsWithinVision(Maps[CurrentMap][player.I][player.J], Maps[CurrentMap][i][j], playerVIS)
                     && (!checkForWallsBetween(Maps[CurrentMap][player.I][player.J], Maps[CurrentMap][i][j])));
-            AssetID = 0;
-
-//            cout<< CurrentMap;
-//            cout << Maps[CurrentMap][i][j].type << "  ";
 
             switch (Maps[CurrentMap][i][j].type){
 //            case 0:
 //                to be added: background elements
             case 1:
-                if (CellIsVisible) AssetID = 1;
-                else if (Maps[CurrentMap][i][j].seen) AssetID = 6;
+                if (CellIsVisible) SDL_RenderCopy(renderer, assets[1], NULL, &temp);
+                else if (Maps[CurrentMap][i][j].seen) SDL_RenderCopy(renderer, assets[6], NULL, &temp);
                 break;
             case 2:
-                if (CellIsVisible) AssetID = 2;
-                else if (Maps[CurrentMap][i][j].seen) AssetID = 7;
+                if (CellIsVisible) SDL_RenderCopy(renderer, assets[2], NULL, &temp);
+                else if (Maps[CurrentMap][i][j].seen) SDL_RenderCopy(renderer, assets[7], NULL, &temp);
                 break;
             case 3:
-                AssetID = 3; // To be added: render floor then render player
+                SDL_RenderCopy(renderer, assets[3], NULL, &temp); // To be added: render floor then render player
                 break;
             case 4:
-                if (CellIsVisible) AssetID = 4;
-                else if (Maps[CurrentMap][i][j].seen) AssetID = 6;
+                if (CellIsVisible) SDL_RenderCopy(renderer, assets[4], NULL, &temp);
+                else if (Maps[CurrentMap][i][j].seen) SDL_RenderCopy(renderer, assets[6], NULL, &temp);
                 break;
             case 5:
-//                if (CellIsVisible)
-                    AssetID = 5; // Since we only have 1 asset for the exit, to be added later
-//                else if (Maps[CurrentMap][i][j].seen) AssetID = 5;
+                if (CellIsVisible) SDL_RenderCopy(renderer, assets[5], NULL, &temp); // Since we only have 1 asset for the exit, to be added later
+                else if (Maps[CurrentMap][i][j].seen) SDL_RenderCopy(renderer, assets[5], NULL, &temp);
                 break;
+            case 6:
+                if (CellIsVisible) {
+                    SDL_RenderCopy(renderer, assets[1], NULL, &temp);
+                    SDL_RenderCopy(renderer, assets[8], NULL, &temp);
+                } else if (Maps[CurrentMap][i][j].seen) SDL_RenderCopy(renderer, assets[6], NULL, &temp);
             }
-            if (AssetID != 0) SDL_RenderCopy(renderer, assets[AssetID], NULL, &temp);
             if (CellIsVisible) Maps[CurrentMap][i][j].seen = 1;
             }
         }
-//        cout << endl << endl;
     }
     DrawHPBar(player.health * 1.0, 10, window, renderer);
     SDL_RenderPresent(renderer);
@@ -447,7 +441,6 @@ void NextMap(){
     listOfEntities.clear();
     if (CurrentMap == NumberOfMapFiles) GameStage = 4;
     else GenerateMap();
-
 }
 
 
@@ -503,7 +496,7 @@ void GenerateMap(){
                     player.VIS = playerVIS; // To be modified
                     break;
                 case 'E':{
-                    temp.type=4;
+                    temp.type=4; // Slime
                     entity NewEnt;
                     NewEnt.I=temp.I;
                     NewEnt.J=temp.J;
@@ -513,7 +506,10 @@ void GenerateMap(){
                     break;
                 }
                 case 'O':
-                    temp.type=5;
+                    temp.type = 5; // Exit
+                    break;
+                case 's':
+                    temp.type = 6; // A sword (item)
                     break;
             }
             NewMap[i].push_back(temp);
@@ -528,7 +524,8 @@ void GenerateMap(){
 
 //Movement
 void pMove(char input){
-    int i = player.I, j = player.J; // Internal coordinates of the target cell
+    // Determining internal coordinates of the target cell
+    int i = player.I, j = player.J;
     switch (input) {
     case 'a':
         j--;
@@ -571,7 +568,21 @@ void pMove(char input){
         NextMap();
         break;
     case 4:
-        winCon=-1;
+        for (int k = 0; k < (int)listOfEntities.size(); k++)
+            if (listOfEntities[k].I == i && listOfEntities[k].J == j) {
+                Attack(player, listOfEntities[k]);
+                cout << "You hit slime for " << player.damage << " damage. ";
+                if (listOfEntities[k].health <= 0) {
+                    listOfEntities.erase(listOfEntities.begin()+k);
+                    Maps[CurrentMap][i][j].type = 1;
+                    cout << "As you finish your assault, its skin disintegrates, letting its innards spill onto the floor." << endl;
+                } else cout << "It has " << listOfEntities[k].health << " health left."<< endl;
+            }
+        break;
+    case 6: // Pick up sword
+        player.damage += 2;
+        cout << "You picked up a sword. It boosts your attack damage by 2.\n";
+        Maps[CurrentMap][i][j].type = 1;
         break;
     }
 }
@@ -702,6 +713,7 @@ void NPCMove(entity &ent){
         if ((abs(ent.J - player.J) <= 1) && (abs(ent.I - player.I) <= 1))// Attack range to be added in place of "1"
         {
             Attack(ent, player);
+            cout << &ent << " hit you for " << ent.damage << " damage." << endl;
             return;
         }
         else moveToLastSeen(ent);
