@@ -31,14 +31,7 @@ void GenerateMap();
 
 
 // Player movement
-void pMoveW (entity &ent);
-void pMoveN (entity &ent);
-void pMoveS (entity &ent);
-void pMoveE (entity &ent);
-void pMoveNE(entity &ent);
-void pMoveSE(entity &ent);
-void pMoveNW(entity &ent);
-void pMoveSW(entity &ent);
+void pMove(char input);
 
 
 cell getCellAtXY(int x, int y);
@@ -195,35 +188,35 @@ int main(int argc, char* argv[]){
                     break;
                 case SDLK_a:
                     playermoved = 1;
-                    pMoveW(player);
+                    pMove('a');
                     break;
                 case SDLK_d:
                     playermoved = 1;
-                    pMoveE(player);
+                    pMove('d');
                     break;
                 case SDLK_s:
                     playermoved = 1;
-                    pMoveS(player);
+                    pMove('s');
                     break;
                 case SDLK_w:
                     playermoved = 1;
-                    pMoveN(player);
+                    pMove('w');
                     break;
                 case SDLK_e:
                     playermoved = 1;
-                    pMoveNE(player);
+                    pMove('e');
                     break;
                 case SDLK_q:
                     playermoved = 1;
-                    pMoveNW(player);
+                    pMove('q');
                     break;
                 case SDLK_c:
                     playermoved = 1;
-                    pMoveSE(player);
+                    pMove('c');
                     break;
                 case SDLK_z:
                     playermoved = 1;
-                    pMoveSW(player);
+                    pMove('z');
                     break;
                 case SDLK_SPACE:
                     playermoved = 1;
@@ -534,14 +527,45 @@ void GenerateMap(){
 
 
 //Movement
-void pMoveW(entity &ent){
-    int i=ent.I;
-    int j=ent.J;
+void pMove(char input){
+    int i = player.I, j = player.J; // Internal coordinates of the target cell
+    switch (input) {
+    case 'a':
+        j--;
+        break;
+    case 'd':
+        j++;
+        break;
+    case 's':
+        i++;
+        break;
+    case 'w':
+        i--;
+        break;
+    case 'e':
+        i--;
+        j++;
+        break;
+    case 'c':
+        i++;
+        j++;
+        break;
+    case 'z':
+        i++;
+        j--;
+        break;
+    case'q':
+        i--;
+        j--;
+        break;
+    }
 
-    switch (Maps[CurrentMap][i][j-1].type){
+    // Player interaction with the target cell
+    switch (Maps[CurrentMap][i][j].type){
     case 1:
-        swapCells(Maps[CurrentMap][i][j], Maps[CurrentMap][i][j-1]);
-        ent.J--;
+        swapCells(Maps[CurrentMap][player.I][player.J], Maps[CurrentMap][i][j]);
+        player.J = j;
+        player.I = i;
         break;
     case 5:
         NextMap();
@@ -551,130 +575,6 @@ void pMoveW(entity &ent){
         break;
     }
 }
-void pMoveE(entity &ent){
-    int i=ent.I;
-    int j=ent.J;
-
-    switch (Maps[CurrentMap][i][j+1].type){
-    case 1:
-        swapCells(Maps[CurrentMap][i][j], Maps[CurrentMap][i][j+1]);
-        ent.J++;
-        break;
-    case 5:
-        NextMap();
-        break;
-    case 4:
-        winCon=-1;
-        break;
-    }
-}
-void pMoveN(entity &ent){
-    int i=ent.I;
-    int j=ent.J;
-
-    switch (Maps[CurrentMap][i-1][j].type){
-    case 1:
-        swapCells(Maps[CurrentMap][i][j], Maps[CurrentMap][i-1][j]);
-        ent.I--;
-        break;
-    case 5:
-        NextMap();
-        break;
-    case 4:
-        winCon=-1;
-        break;
-    }
-}
-void pMoveS(entity &ent){
-    int i=ent.I;
-    int j=ent.J;
-
-    switch (Maps[CurrentMap][i+1][j].type){
-    case 1:
-        swapCells(Maps[CurrentMap][i][j], Maps[CurrentMap][i+1][j]);
-        ent.I++;
-        break;
-    case 5:
-        NextMap();
-        break;
-    case 4:
-        winCon=-1;
-        break;
-    }
-}
-void pMoveNE(entity &ent){
-    int i=ent.I;
-    int j=ent.J;
-
-    switch (Maps[CurrentMap][i-1][j+1].type){
-    case 1:
-        swapCells(Maps[CurrentMap][i][j], Maps[CurrentMap][i-1][j+1]);
-        ent.I--;
-        ent.J++;
-        break;
-    case 5:
-        NextMap();
-        break;
-    case 4:
-        winCon=-1;
-        break;
-    }
-}
-void pMoveSE(entity &ent){
-    int i=ent.I;
-    int j=ent.J;
-
-    switch (Maps[CurrentMap][i+1][j+1].type){
-    case 1:
-        swapCells(Maps[CurrentMap][i][j], Maps[CurrentMap][i+1][j+1]);
-        ent.I++;
-        ent.J++;
-        break;
-    case 5:
-        NextMap();
-        break;
-    case 4:
-        winCon=-1;
-        break;
-    }
-}
-void pMoveNW(entity &ent){
-    int i=ent.I;
-    int j=ent.J;
-
-    switch (Maps[CurrentMap][i-1][j-1].type){
-    case 1:
-        swapCells(Maps[CurrentMap][i][j], Maps[CurrentMap][i-1][j-1]);
-        ent.I--;
-        ent.J--;
-        break;
-    case 5:
-        NextMap();
-        break;
-    case 4:
-        winCon=-1;
-        break;
-    }
-}
-void pMoveSW(entity &ent){
-    int i=ent.I;
-    int j=ent.J;
-
-    switch (Maps[CurrentMap][i+1][j-1].type){
-    case 1:
-        swapCells(Maps[CurrentMap][i][j], Maps[CurrentMap][i+1][j-1]);
-        ent.I++;
-        ent.J--;
-        break;
-    case 5:
-        NextMap();
-        break;
-    case 4:
-        winCon=-1;
-        break;
-    }
-}
-
 
 
 
