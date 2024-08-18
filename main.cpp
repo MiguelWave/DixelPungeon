@@ -109,6 +109,7 @@ int main(int argc, char* argv[]){
     assets.push_back(loadTexture("Assets/Iron_Sword_JE2_BE2.png", renderer));// 8 sword
     assets.push_back(loadTexture("Assets/Dungeon_Character_2.png", renderer));// 9 character sheet
     assets.push_back(loadTexture("Assets/chest_3.png", renderer)); // 10 chest
+    assets.push_back(loadTexture("Assets/Potion_of_Saturation_BE2.png", renderer));// 11 potion
 
     MenuAssets.push_back(loadTexture("Assets/title.PNG", renderer));
     MenuAssets.push_back(loadTexture("Assets/start.PNG", renderer));
@@ -437,6 +438,12 @@ void RenderGame(SDL_Window* window, SDL_Renderer* renderer) {
                     SDL_RenderCopy(renderer, assets[10], NULL, &temp);
                 } else if (Maps[CurrentMap][i][j].seen) SDL_RenderCopy(renderer, assets[6], NULL, &temp);
                 break;
+            case 9:
+                if (CellIsVisible) {
+                    SDL_RenderCopy(renderer, assets[1], NULL, &temp);
+                    SDL_RenderCopy(renderer, assets[11], NULL, &temp);
+                } else if (Maps[CurrentMap][i][j].seen) SDL_RenderCopy(renderer, assets[6], NULL, &temp);
+                break;
             }
             if (CellIsVisible) Maps[CurrentMap][i][j].seen = 1;
             }
@@ -577,6 +584,9 @@ void GenerateMap(){
                  case 'C':{
                     temp.type = 8; // A chest
                     break;}
+                case 'P':{
+                    temp.type = 9; // potion
+                    break;}
             }
             NewMap[i].push_back(temp);
         }
@@ -663,6 +673,8 @@ void pMove(char input){
             if (listOfEntities[k].I == i && listOfEntities[k].J == j) {
                 Attack(player, listOfEntities[k]);
                 cout << "You hit skeleton for " << player.damage << " damage. ";
+
+                // Check if dead
                 if (listOfEntities[k].health <= 0) {
                     listOfEntities.erase(listOfEntities.begin()+k);
                     Maps[CurrentMap][i][j].type = 1;
@@ -671,7 +683,12 @@ void pMove(char input){
             }
         break;
     case 8:
-        Maps[CurrentMap][i][j].type = 6;// To be added: chest randomly rolls an item
+        Maps[CurrentMap][i][j].type = 6; // To be added: chest randomly rolls an item
+        break;
+    case 9: // Pick up potion
+        player.health = min(player.health + 5, 10);
+        cout << "You picked up a potion. You feel rejuvinated.\n";
+        Maps[CurrentMap][i][j].type = 1;
         break;
     }
 }
