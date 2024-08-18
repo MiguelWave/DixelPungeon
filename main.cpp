@@ -18,14 +18,32 @@ int GameStage = 0; //0. menu 1.game 2.inventory 3.gameover 4. win -1. game is no
 int winCon = 0; //-1 means loss, 0 means game cancelled, 1 means win
 int cellDim = 55; // Dimensions of each cells (in pixels)
 int playerVIS = 5;
-int entityVIS = 3;
+int entityVIS = 5;
 int renderDistance = 8;
 
+int Sanity = 100;
+
+
+
+
+// Assets
+vector<Mix_Music*> Sounds;
+vector<SDL_Texture*> assets;
+vector<SDL_Texture*> MenuAssets;
+SDL_Texture* GameOver;
+SDL_Texture* Win;
 vector<vector<vector<cell>>> Maps;
 vector<entity> listOfEntities; // Also works as a turn base
 entity player;
 
+// Rendering (reading)
+void RenderMenu(SDL_Window* window, SDL_Renderer* renderer, const int& SelectorPosition);
+void RenderGameOver(SDL_Window* window, SDL_Renderer* renderer);
+void RenderWin(SDL_Window* window, SDL_Renderer* renderer);
+SDL_Texture* loadTexture(const string &file, SDL_Renderer *ren);
 void RenderGame(SDL_Window* window, SDL_Renderer* renderer);
+
+// Generating (writing)
 void GenerateMap();
 
 void pMove(char input);
@@ -36,10 +54,7 @@ bool IsWithinVision(const cell &a, const cell &b, int VIS);
 bool checkForWallsBetween(const cell &a, const cell &b);
 
 
-void RenderMenu(SDL_Window* window, SDL_Renderer* renderer, const int& SelectorPosition);
-void RenderGameOver(SDL_Window* window, SDL_Renderer* renderer);
-void RenderWin(SDL_Window* window, SDL_Renderer* renderer);
-SDL_Texture* loadTexture(const string &file, SDL_Renderer *ren);
+
 
 void NPCMove(entity &ent);
 void moveToLastSeen(entity &ent);
@@ -49,10 +64,6 @@ void Attack(const entity& attacker, entity& defender);
 void DrawHPBar(float CurrentHP, float MaxHP, SDL_Window* window, SDL_Renderer* renderer);
 
 //void GetClick() {}
-vector<SDL_Texture*> assets;
-vector<SDL_Texture*> MenuAssets;
-SDL_Texture* GameOver;
-SDL_Texture* Win;
 
 void InitNewGame(){
     // Clear player inventory
@@ -75,16 +86,16 @@ int main(int argc, char* argv[]){
     SDL_Window* window;
     SDL_Renderer* renderer;
     initSDL(window, renderer);
+//    Mix_Init(MIX_INIT_MP3);
 
     // Event variable
     SDL_Event e;
 
-    // InitializeMap
-//    if (Maps.size() == 0){
-//        cout<<"No map detected";
-//        return 0;
-//    }
-
+    // Init audio
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024) < 0) {
+        cout << "Could not init" << endl;
+        return 0;
+    }
 
     // Importing graphics
     assets.push_back(loadTexture("Assets/space.bmp", renderer)); // 0 space
@@ -96,6 +107,7 @@ int main(int argc, char* argv[]){
     assets.push_back(loadTexture("Assets/floor2.bmp", renderer));// 6 floor (dark)
     assets.push_back(loadTexture("Assets/wall2.bmp", renderer)); // 7 wall (dark
     assets.push_back(loadTexture("Assets/Iron_Sword_JE2_BE2.png", renderer));// 8 sword
+    assets.push_back(loadTexture("Assets/Dungeon_Character_2.png", renderer));// 9 character sheet
 
     MenuAssets.push_back(loadTexture("Assets/title.PNG", renderer));
     MenuAssets.push_back(loadTexture("Assets/start.PNG", renderer));
@@ -106,15 +118,32 @@ int main(int argc, char* argv[]){
     GameOver = loadTexture("Assets/game_over.PNG", renderer);
     Win = loadTexture("Assets/win.PNG", renderer);
 
+    Sounds.push_back(Mix_LoadMUS("Assets/Sounds/Cave3.ogg"));//0 ambient
+    Sounds.push_back(Mix_LoadMUS("Assets/Sounds/Cave4.ogg"));//1 ambient
+    Sounds.push_back(Mix_LoadMUS("Assets/Sounds/Cave10.ogg"));//2 ambient
+    Sounds.push_back(Mix_LoadMUS("Assets/Sounds/Cave11.ogg"));//3 ambient
+    Sounds.push_back(Mix_LoadMUS("Assets/Sounds/Cave12.ogg"));//4 ambient
+    Sounds.push_back(Mix_LoadMUS("Assets/Sounds/Cave13.ogg"));//5 ambient
+    Sounds.push_back(Mix_LoadMUS("Assets/Sounds/Deepslate_break1.ogg"));//6 player move
+    Sounds.push_back(Mix_LoadMUS("Assets/Sounds/Deepslate_break2.ogg"));//7 player move
+    Sounds.push_back(Mix_LoadMUS("Assets/Sounds/Deepslate_break3.ogg"));//8 player move
+    Sounds.push_back(Mix_LoadMUS("Assets/Sounds/Deepslate_break4.ogg"));//9 player move
+
     int Selector = 1;
 
+
+
+
+    // Debugging
 //    RenderGame(window, renderer);
 //    while (1) {
 //        if ( SDL_WaitEvent(&e) == 0) continue;
 //        if (e.type == SDL_QUIT) {
 //            break;
 //        }
+//        if (e.type == SDL_KEYDOWN) Mix_PlayMusic(test, 0);
 //    }
+
     // Render
     while (GameStage != -1) {
         switch (GameStage) {
@@ -372,7 +401,11 @@ void RenderGame(SDL_Window* window, SDL_Renderer* renderer) {
                 else if (Maps[CurrentMap][i][j].seen) SDL_RenderCopy(renderer, assets[7], NULL, &temp);
                 break;
             case 3:
-                SDL_RenderCopy(renderer, assets[3], NULL, &temp); // To be added: render floor then render player
+                SDL_RenderCopy(renderer, assets[1], NULL, &temp); // To be added: render floor then render player
+                SDL_Rect character;
+                character.h = 16; character.w = 16;
+                character.x = 16 * 5; character.y = 16 * 0;
+                SDL_RenderCopy(renderer, assets[9], &character, &temp);
                 break;
             case 4:
                 if (CellIsVisible) SDL_RenderCopy(renderer, assets[4], NULL, &temp);
@@ -387,6 +420,16 @@ void RenderGame(SDL_Window* window, SDL_Renderer* renderer) {
                     SDL_RenderCopy(renderer, assets[1], NULL, &temp);
                     SDL_RenderCopy(renderer, assets[8], NULL, &temp);
                 } else if (Maps[CurrentMap][i][j].seen) SDL_RenderCopy(renderer, assets[6], NULL, &temp);
+                break;
+            case 7:
+                if (CellIsVisible) {
+                    SDL_RenderCopy(renderer, assets[1], NULL, &temp); // To be added: render floor then render player
+                    SDL_Rect character;
+                    character.h = 16; character.w = 16;
+                    character.x = 16 * 4; character.y = 16 * 1;
+                    SDL_RenderCopy(renderer, assets[9], &character, &temp);
+                } else if (Maps[CurrentMap][i][j].seen) SDL_RenderCopy(renderer, assets[6], NULL, &temp);
+                break;
             }
             if (CellIsVisible) Maps[CurrentMap][i][j].seen = 1;
             }
@@ -450,8 +493,10 @@ void GenerateMap(){
 
     // Get random map
     string path = "maps/map";
+
     srand((unsigned) time(NULL));
     int random = rand() % NumberOfMapFiles;
+
     while (Used[random]) random = rand() % NumberOfMapFiles;
     path += to_string(random);
     path += ".txt";
@@ -511,6 +556,17 @@ void GenerateMap(){
                 case 's':
                     temp.type = 6; // A sword (item)
                     break;
+                case 'S':
+                    temp.type = 7; // Skeleton
+                    entity NewEnt;
+                    NewEnt.I=temp.I;
+                    NewEnt.J=temp.J;
+                    NewEnt.agitated = 0;
+                    NewEnt.VIS=entityVIS;
+                    NewEnt.damage = 4;
+                    NewEnt.health = 8;
+                    listOfEntities.push_back(NewEnt);
+                    break;
             }
             NewMap[i].push_back(temp);
         }
@@ -557,12 +613,20 @@ void pMove(char input){
         break;
     }
 
+    // Randomness in sound played
+    srand((unsigned) time(NULL));
+    int random;
+
     // Player interaction with the target cell
     switch (Maps[CurrentMap][i][j].type){
     case 1:
         swapCells(Maps[CurrentMap][player.I][player.J], Maps[CurrentMap][i][j]);
         player.J = j;
         player.I = i;
+
+        random = rand() % 4 + 6; // 4 being the number of sounds for player moving, and 6 being its position in the Sounds vector
+
+        Mix_PlayMusic(Sounds[random], 0);
         break;
     case 5:
         NextMap();
