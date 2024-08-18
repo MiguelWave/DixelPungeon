@@ -1,0 +1,15 @@
+// Debugger
+    for (int i = 0; i < Maps[0].size(); i++) {
+        for (int j = 0; j < Maps[0][i].size(); j++) {
+            if (Maps[0][i][j].type == 2 ||Maps[0][i][j].type == 0) cout << "  ";
+            else cout << Maps[0][i][j].type <<" ";
+        }
+        cout<<endl<<endl;
+    }
+    RenderGame(window, renderer);
+    while (1) {
+        if ( SDL_WaitEvent(&e) == 0) continue;
+        if (e.type == SDL_QUIT) {
+            break;
+        }
+    }

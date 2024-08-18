@@ -7,19 +7,19 @@
 
 using namespace std;
 
-const int NumberOfMapFiles = 1;
+const int NumberOfMapFiles = 2;
 int CurrentMap = 0;
 bool Used[NumberOfMapFiles];
 
 
-int GameStage = 0; //0. menu 1.game 2.inventory 3.gameover 4. win
+int GameStage = 0; //0. menu 1.game 2.inventory 3.gameover 4. win -1. game is no longer running (exit game)
 
 //Elements
 int winCon = 0; //-1 means loss, 0 means game cancelled, 1 means win
 int cellDim = 55; // Dimensions of each cells (in pixels)
 int playerVIS = 5;
 int entityVIS = 3;
-int renderDistance = 12;
+int renderDistance = 8;
 
 vector<vector<cell>> cellLayout;
 vector<vector<vector<cell>>> Maps;
@@ -71,244 +71,216 @@ SDL_Texture* Win;
 //----------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------
 int main(int argc, char* argv[]){
-//    // Window initialization
-//    SDL_Window* window;
-//    SDL_Renderer* renderer;
-//    initSDL(window, renderer);
-//
-//    // Event variable
-//    SDL_Event e;
-//
-//    // Importing map
-//    for (int i = 0; i < NumberOfMapFiles; i++) {
-//        Used[i] = false;
-//    }
-//    GenerateMap();
-//    if (Maps.size() == 0){
-//        cout<<"No map detected";
-//        return 0;
-//    }
-//
-//    // Importing graphics
-//    assets.push_back(loadTexture("Assets/space.bmp", renderer));
-//    assets.push_back(loadTexture("Assets/floor1.bmp", renderer));
-//    assets.push_back(loadTexture("Assets/wall.bmp", renderer));
-//    assets.push_back(loadTexture("Assets/player.bmp", renderer));
-//    assets.push_back(loadTexture("Assets/enemy.bmp", renderer));
-//    assets.push_back(loadTexture("Assets/exit.bmp", renderer));
-//    assets.push_back(loadTexture("Assets/floor2.bmp", renderer));
-//    assets.push_back(loadTexture("Assets/wall2.bmp", renderer));
-//
-//    MenuAssets.push_back(loadTexture("Assets/title.PNG", renderer));
-//    MenuAssets.push_back(loadTexture("Assets/start.PNG", renderer));
-//    MenuAssets.push_back(loadTexture("Assets/settings.PNG", renderer));
-//    MenuAssets.push_back(loadTexture("Assets/quit.PNG", renderer));
-//    MenuAssets.push_back(loadTexture("Assets/selector.PNG", renderer));
-//
-//    GameOver = loadTexture("Assets/game_over.PNG", renderer);
-//    Win = loadTexture("Assets/win.PNG", renderer);
-//
-//    int Selector = 1;
-//
-//    // Render
-//    while (1) {
-//        if (GameStage == 0) {
-//            RenderMenu(window, renderer, Selector);
-//
-////             Idling
-//            SDL_Delay(10);
-//            if ( SDL_WaitEvent(&e) == 0) continue;
-//
-////             Exit via closing window
-//            if (e.type == SDL_QUIT) break;
-//
-//            // Event of user input
-//            if (e.type == SDL_KEYDOWN) {
-//                if (e.key.keysym.sym == SDLK_RETURN) {
-//                    switch (Selector) {
-//                    case 1:
-//                        GameStage = 1;
-//                        break;
-//                    case 2:
-//                        break;
-//                    case 3:
-//                        return 0;
-//                    }
-//                } else if (e.key.keysym.sym == SDLK_w || e.key.keysym.sym == SDLK_UP) {
-//                    if (Selector > 1) Selector--;
-//                    RenderMenu(window, renderer, Selector);
-//                } else if (e.key.keysym.sym == SDLK_s || e.key.keysym.sym == SDLK_DOWN) {
-//                    if (Selector < 3) Selector++;
-//                    RenderMenu(window, renderer, Selector);
-//                }
-//            }
-//        } else if (GameStage == 1) {
-//            RenderGame(window, renderer);
-//            // Idling
-//            SDL_Delay(10);
-//            if ( SDL_WaitEvent(&e) == 0) continue;
-//
-//            // Exit via big red X
-//            if (e.type == SDL_QUIT) break;
-//
-//            // Player input analyzation
-//            if (e.type == SDL_KEYDOWN) {
-//                bool playermoved = false;
-//                if (e.key.keysym.sym == SDLK_ESCAPE) break;     // Exit via ESC
-//                else switch (e.key.keysym.sym) {
-//                case SDLK_a:
-//                    playermoved = 1;
-//                    pMoveW(player);
-//                    break;
-//                case SDLK_d:
-//                    playermoved = 1;
-//                    pMoveE(player);
-//                    break;
-//                case SDLK_s:
-//                    playermoved = 1;
-//                    pMoveS(player);
-//                    break;
-//                case SDLK_w:
-//                    playermoved = 1;
-//                    pMoveN(player);
-//                    break;
-//                case SDLK_e:
-//                    playermoved = 1;
-//                    pMoveNE(player);
-//                    break;
-//                case SDLK_q:
-//                    playermoved = 1;
-//                    pMoveNW(player);
-//                    break;
-//                case SDLK_c:
-//                    playermoved = 1;
-//                    pMoveSE(player);
-//                    break;
-//                case SDLK_z:
-//                    playermoved = 1;
-//                    pMoveSW(player);
-//                    break;
-//                case SDLK_SPACE:
-//                    playermoved = 1;
-//                    break;
-//                }
-//                if (playermoved) for (int i = 0; i < (int)listOfEntities.size(); i++) NPCMove(listOfEntities[i]);
-//                RenderGame(window, renderer);
-//            }
-//            // Check win condition
-//            if (player.health <= 0) winCon = -1;
-//            if (CurrentMap == NumberOfMapFiles - 1) winCon = 1;
-//
-//            if (winCon == -1)   GameStage = 3;
-//            else if (winCon == 1)   GameStage = 4;
-//        } else if (GameStage == 3) {
-//            RenderGameOver(window, renderer);
-//            if (SDL_WaitEvent(&e) == 0) continue;
-//
-//            // Exit via closing window
-//            if (e.type == SDL_QUIT) break;
-//
-//            // Event of user input
-//            if (e.type == SDL_KEYDOWN) break;
-//        } else if (GameStage == 4) {
-//            RenderWin(window, renderer);
-//            if (SDL_WaitEvent(&e) == 0) continue;
-//
-//            // Exit via closing window
-//            if (e.type == SDL_QUIT) break;
-//
-//            // Event of user input
-//            if (e.type == SDL_KEYDOWN) break;
+    // Window initialization
+    SDL_Window* window;
+    SDL_Renderer* renderer;
+    initSDL(window, renderer);
+
+    // Event variable
+    SDL_Event e;
+
+    // Importing map
+    for (int i = 0; i < NumberOfMapFiles; i++) {
+        Used[i] = false;
+    }
+    GenerateMap();
+    if (Maps.size() == 0){
+        cout<<"No map detected";
+        return 0;
+    }
+
+//    // Debugger
+//    for (int i = 0; i < Maps[0].size(); i++) {
+//        for (int j = 0; j < Maps[0][i].size(); j++) {
+//            if (Maps[0][i][j].type == 2 || Maps[0][i][j].type == 0) cout << "  ";
+//            else cout << Maps[0][i][j].type <<" ";
 //        }
-//
+//        cout<<endl<<endl;
 //    }
-//    switch (winCon) {
-//        case -1:
-//            cout<<"Game over! Better luck next time.";
+
+    // Importing graphics
+    assets.push_back(loadTexture("Assets/space.bmp", renderer));
+    assets.push_back(loadTexture("Assets/floor1.bmp", renderer));
+    assets.push_back(loadTexture("Assets/wall.bmp", renderer));
+    assets.push_back(loadTexture("Assets/player.bmp", renderer));
+    assets.push_back(loadTexture("Assets/enemy.bmp", renderer));
+    assets.push_back(loadTexture("Assets/exit.bmp", renderer));
+    assets.push_back(loadTexture("Assets/floor2.bmp", renderer));
+    assets.push_back(loadTexture("Assets/wall2.bmp", renderer));
+
+    MenuAssets.push_back(loadTexture("Assets/title.PNG", renderer));
+    MenuAssets.push_back(loadTexture("Assets/start.PNG", renderer));
+    MenuAssets.push_back(loadTexture("Assets/settings.PNG", renderer));
+    MenuAssets.push_back(loadTexture("Assets/quit.PNG", renderer));
+    MenuAssets.push_back(loadTexture("Assets/selector.PNG", renderer));
+
+    GameOver = loadTexture("Assets/game_over.PNG", renderer);
+    Win = loadTexture("Assets/win.PNG", renderer);
+
+    int Selector = 1;
+
+//    RenderGame(window, renderer);
+//    while (1) {
+//        if ( SDL_WaitEvent(&e) == 0) continue;
+//        if (e.type == SDL_QUIT) {
 //            break;
-//        case 0:
-//            cout<<"Game cancelled";
-//            break;
-//        case 1:
-//            cout<<"Congratulations, you win!";
-//            break;
+//        }
 //    }
+    // Render
+    while (GameStage != -1) {
+        switch (GameStage) {
+        case 0: {
+            RenderMenu(window, renderer, Selector);
+
+//             Idling
+            SDL_Delay(10);
+            if ( SDL_WaitEvent(&e) == 0) continue;
+
+//             Exit via closing window
+            if (e.type == SDL_QUIT) {
+                GameStage = -1;
+                break;
+            }
+
+            // Event of user input
+            if (e.type == SDL_KEYDOWN) {
+                switch (e.key.keysym.sym) {
+                case SDLK_RETURN: // User pressed Enter
+                    switch (Selector) {
+                    case 1:
+                        GameStage = 1;
+                        break;
+                    case 2:
+                    // To be added: settings
+                        break;
+                    case 3:
+                        GameStage = -1;
+                        break;
+                    }
+                    break;
+
+                case SDLK_w:
+                case SDLK_UP:
+                    if (Selector > 1) Selector--;
+                    RenderMenu(window, renderer, Selector);
+                    break;
+
+                case SDLK_s:
+                case SDLK_DOWN:
+                    if (Selector < 3) Selector++;
+                    RenderMenu(window, renderer, Selector);
+                    break;
+                }
+            }
+            break;
+        }
+        case 1: {
+            RenderGame(window, renderer);
+            // Idling
+            SDL_Delay(10);
+            if (SDL_WaitEvent(&e) == 0) continue;
+
+            // User closes window
+            if (e.type == SDL_QUIT) {
+                GameStage = -1;
+                break;
+            }
+
+            // Player input analyzation
+            if (e.type == SDL_KEYDOWN) {
+                bool playermoved = false;
+                switch (e.key.keysym.sym) {
+                case SDLK_ESCAPE:
+                    GameStage = -1;
+                    break;
+                case SDLK_a:
+                    playermoved = 1;
+                    pMoveW(player);
+                    break;
+                case SDLK_d:
+                    playermoved = 1;
+                    pMoveE(player);
+                    break;
+                case SDLK_s:
+                    playermoved = 1;
+                    pMoveS(player);
+                    break;
+                case SDLK_w:
+                    playermoved = 1;
+                    pMoveN(player);
+                    break;
+                case SDLK_e:
+                    playermoved = 1;
+                    pMoveNE(player);
+                    break;
+                case SDLK_q:
+                    playermoved = 1;
+                    pMoveNW(player);
+                    break;
+                case SDLK_c:
+                    playermoved = 1;
+                    pMoveSE(player);
+                    break;
+                case SDLK_z:
+                    playermoved = 1;
+                    pMoveSW(player);
+                    break;
+                case SDLK_SPACE:
+                    playermoved = 1;
+                    break;
+                }
+                if (playermoved) for (int i = 0; i < (int)listOfEntities.size(); i++) NPCMove(listOfEntities[i]);
+//                RenderGame(window, renderer);
+            }
+            // Check win condition
+            if (GameStage == -1) break;
+            if (player.health <= 0) GameStage = 3;
+            break;
+        }
+        case 3: {
+            RenderGameOver(window, renderer);
+            if (SDL_WaitEvent(&e) == 0) continue;
+
+            // Exit via closing window
+            if (e.type == SDL_QUIT) GameStage = -1;
+
+            // Press any key to continue
+            if (e.type == SDL_KEYDOWN) GameStage = 0;
+
+            break;
+        }
+        case 4: {
+            RenderWin(window, renderer);
+            // To be added: display stats
+            if (SDL_WaitEvent(&e) == 0) continue;
+
+            // Exit via closing window
+            if (e.type == SDL_QUIT) GameStage = -1;
+
+            // Press any key to continue
+            if (e.type == SDL_KEYDOWN) GameStage = 0;
+
+            break;
+        }
+        }
+    }
+    switch (winCon) {
+        case -1:
+            cout<<"Game over! Better luck next time.";
+            break;
+        case 0:
+            cout<<"Game cancelled";
+            break;
+        case 1:
+            cout<<"Congratulations, you win!";
+            break;
+    }
+
     return 0;
 }
 //----------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------
-
-
-// CHECKED!!!!!
-void GenerateMap(){
-    vector<vector<cell>> NewMap;
-
-    // Get random map
-    string path = "maps/map";
-    srand((unsigned) time(NULL));
-    int random = rand() % NumberOfMapFiles;
-    while (Used[random]) random = rand() % NumberOfMapFiles;
-    path += to_string(random);
-    path += ".txt";
-    Used[random] = true;
-
-    // Input from file
-    string line;
-    int i = 0;
-    ifstream inpfile(path);
-    cell temp;
-
-    while (!inpfile.eof()){
-        // Add a new line to the internal layout
-        getline(inpfile, line);
-        NewMap.push_back(vector<cell>());
-
-        for (int j = 0; j < int(line.length()); ++j){
-            //Coordinates
-            temp.x = cellDim * j;
-            temp.y = cellDim * i;
-
-            // Internal coordinates
-            temp.I = i;
-            temp.J = j;
-
-            //Determining cell type
-            switch (line[j]){
-                case '.':
-                    temp.type=1;
-                    break;
-                case '*':
-                    temp.type=2;
-                    break;
-                case 'Y':
-                    temp.type=3;
-                    player.I=temp.I;
-                    player.J=temp.J;
-                    player.agitated=0; //????
-                    player.VIS = playerVIS; // To be modified
-                    break;
-                case 'E':{
-                    temp.type=4;
-                    entity NewEnt;
-                    NewEnt.I=temp.I;
-                    NewEnt.J=temp.J;
-                    NewEnt.agitated = 0;
-                    NewEnt.VIS=entityVIS;
-                    listOfEntities.push_back(NewEnt);
-                    break;
-                }
-                case 'O':
-                    temp.type=5;
-                    break;
-            }
-            NewMap[i].push_back(temp);
-        }
-        i++;//Number of lines in the internal layout
-    }
-    inpfile.close();
-    Maps.push_back(NewMap);
-}
 
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -385,20 +357,23 @@ void RenderGame(SDL_Window* window, SDL_Renderer* renderer) {
     SDL_Rect temp;
 
     //Redrawing the entire thing from scratch
-    for (int i = player.I - renderDistance; i < player.I + renderDistance; ++i)
-        for (int j = player.J - renderDistance; j < player.J + renderDistance; ++j) {// Only render from a certain number of cells away
+    for (int i = player.I - renderDistance; i <= player.I + renderDistance; ++i) {
+        for (int j = player.J - renderDistance; j <= player.J + renderDistance; ++j) {// Only render from a certain number of cells away
             if ((i >= 0) && (j >= 0)
                 && (i < int(Maps[CurrentMap].size()))
-                && (j < int(Maps[CurrentMap][i].size()))) continue;// Only render cells in map boundaries
+                && (j < int(Maps[CurrentMap][i].size()))) {// Only render cells in map boundaries
 
-            temp.x = int(SCREEN_WIDTH/2 - cellDim/2 + (j-player.J)*cellDim); //Centered on the player
-            temp.y = int(SCREEN_HEIGHT/2 - cellDim/2 + (i-player.I)*cellDim);
+            temp.x = int(SCREEN_WIDTH/2 - cellDim/2 + (j - player.J)*cellDim); //Centered on the player
+            temp.y = int(SCREEN_HEIGHT/2 - cellDim/2 + (i - player.I)*cellDim);
             temp.w = cellDim;
             temp.h = cellDim;
 
             CellIsVisible = (IsWithinVision(Maps[CurrentMap][player.I][player.J], Maps[CurrentMap][i][j], playerVIS)
                     && (!checkForWallsBetween(Maps[CurrentMap][player.I][player.J], Maps[CurrentMap][i][j])));
             AssetID = 0;
+
+//            cout<< CurrentMap;
+//            cout << Maps[CurrentMap][i][j].type << "  ";
 
             switch (Maps[CurrentMap][i][j].type){
 //            case 0:
@@ -426,8 +401,10 @@ void RenderGame(SDL_Window* window, SDL_Renderer* renderer) {
             }
             if (AssetID != 0) SDL_RenderCopy(renderer, assets[AssetID], NULL, &temp);
             if (CellIsVisible) Maps[CurrentMap][i][j].seen = 1;
+            }
         }
-
+//        cout << endl << endl;
+    }
     DrawHPBar(player.health * 1.0, 10, window, renderer);
     SDL_RenderPresent(renderer);
 }
@@ -459,10 +436,11 @@ void RenderWin(SDL_Window* window, SDL_Renderer* renderer) {
     temp.w = SCREEN_WIDTH - 2 * temp.x;
     temp.h = 100;
     SDL_RenderCopy(renderer, Win, NULL, &temp);
+    // To be added: display stats
     SDL_RenderPresent(renderer);
 }
 //----------
-// Swap cells
+// Gane=
 void swapCells(cell &from, cell &to)
 {
     cell temp;
@@ -477,6 +455,80 @@ void NextMap(){
     if (CurrentMap == NumberOfMapFiles) GameStage = 4;
     else GenerateMap();
 
+}
+
+
+// CHECKED!!!!!
+void GenerateMap(){
+    vector<vector<cell>> NewMap;
+
+    // Get random map
+    string path = "maps/map";
+    srand((unsigned) time(NULL));
+    int random = rand() % NumberOfMapFiles;
+    while (Used[random]) random = rand() % NumberOfMapFiles;
+    path += to_string(random);
+    path += ".txt";
+    Used[random] = true;
+
+    // Input from file
+    string line;
+    int i = 0;
+    ifstream inpfile(path);
+    cell temp;
+
+    while (!inpfile.eof()){
+        // Add a new line to the internal layout
+        getline(inpfile, line);
+        NewMap.push_back(vector<cell>());
+
+        for (int j = 0; j < int(line.length()); ++j){
+            //Coordinates
+            temp.x = cellDim * j;
+            temp.y = cellDim * i;
+
+            // Internal coordinates
+            temp.I = i;
+            temp.J = j;
+
+            //Determining cell type
+            switch (line[j]){
+                default:
+                    temp.type = 0;
+                    break;
+                case '.':
+                    temp.type=1;
+                    break;
+                case '*':
+                    temp.type=2;
+                    break;
+                case 'Y':
+                    temp.type=3;
+                    player.I=temp.I;
+                    player.J=temp.J;
+                    player.agitated=0; //????
+                    player.VIS = playerVIS; // To be modified
+                    break;
+                case 'E':{
+                    temp.type=4;
+                    entity NewEnt;
+                    NewEnt.I=temp.I;
+                    NewEnt.J=temp.J;
+                    NewEnt.agitated = 0;
+                    NewEnt.VIS=entityVIS;
+                    listOfEntities.push_back(NewEnt);
+                    break;
+                }
+                case 'O':
+                    temp.type=5;
+                    break;
+            }
+            NewMap[i].push_back(temp);
+        }
+        i++;//Number of lines in the internal layout
+    }
+    inpfile.close();
+    Maps.push_back(NewMap);
 }
 
 
