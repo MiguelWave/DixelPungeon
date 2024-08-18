@@ -15,7 +15,17 @@ On the top bar, go to projects->build options.
 
 In Linker settings section, add "-lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf" (brackets not included) in Other linker options.
 
-In Search Directories section: 1. In compiler: make sure there are paths to include/SDL2's. 2. In Linker: make sure there are paths to lib's.
+![This is how it should look like](https://github.com/user-attachments/assets/3d55c217-a753-4714-b941-2f5b89b0ac89)
+
+In Search Directories section: 1. In compiler: make sure there are paths to include/SDL2's. 
+
+![This is how it should look like](https://github.com/user-attachments/assets/596580c4-de57-4679-85d3-e99a34b8d590)
+
+
+2. In Linker: make sure there are paths to lib's.
+
+![This is how it should look like](https://github.com/user-attachments/assets/c7eaa71b-5f04-46e9-ade9-c42c57101bf7)
+
 
 ---Description---
 
@@ -29,5 +39,18 @@ If all that's a little too much for a 2-bit dungeon crawler game made by an unex
 
 ---How to play---
 
-Since the game is still in its alpha stages, the rules are fairly simple: avoid the enemies (the red blocks) and get to the exit (the white block) using omni-directional controls: W for North, E for Northeast, D for East, C for Southeast, S for South, Z for Southwest, A for West, Q for Northwest.
-You can also create your own map with instructions in map.txt.
+Wander through the dungeon to find your way out!
+Fight through dangerous enemies or outwit them, the choice is yours. 
+Collect items to power yourself up!
+![image](https://github.com/user-attachments/assets/81c89ff4-e783-43b4-8dfc-f56c64fe20cb)
+
+
+---Credits---
+
+Assets used:
+
+Minecraft textures and sounds
+
+Itch.io pixel dungeon assets: https://pixel-poem.itch.io/dungeon-assetpuck
+
+
