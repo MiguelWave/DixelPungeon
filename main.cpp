@@ -21,8 +21,11 @@ int playerVIS = 5;
 int entityVIS = 5;
 int renderDistance = 8;
 
-int Sanity = 100;
-
+float Sanity = 100;
+float SanityDecayPerTurn = 0.5;
+float DecayMultiplierPerTurn = 1.1;
+void DecaySanity();
+void SpawnRandom();
 
 
 
@@ -52,7 +55,6 @@ cell getCellAtXY(int x, int y);
 int getTypeAtXY(int x, int y);
 bool IsWithinVision(const cell &a, const cell &b, int VIS);
 bool checkForWallsBetween(const cell &a, const cell &b);
-
 
 
 
@@ -460,10 +462,10 @@ void RenderGameOver(SDL_Window* window, SDL_Renderer* renderer) {
 
     // Rendering title
     SDL_Rect temp;
-    temp.x = 200;
-    temp.y = 100;
-    temp.w = SCREEN_WIDTH - 2 * temp.x;
-    temp.h = 100;
+    temp.w = 930;
+    temp.h = 140;
+    temp.x = SCREEN_WIDTH/2 - temp.w/2;
+    temp.y = SCREEN_HEIGHT/2 - temp.h/2;
     SDL_RenderCopy(renderer, GameOver, NULL, &temp);
     SDL_RenderPresent(renderer);
 }
@@ -475,10 +477,10 @@ void RenderWin(SDL_Window* window, SDL_Renderer* renderer) {
 
     // Rendering title
     SDL_Rect temp;
-    temp.x = 200;
-    temp.y = 100;
-    temp.w = SCREEN_WIDTH - 2 * temp.x;
-    temp.h = 100;
+    temp.w = 930;
+    temp.h = 140;
+    temp.x = SCREEN_WIDTH/2 - temp.w/2;
+    temp.y = SCREEN_HEIGHT/2 - temp.h/2;
     SDL_RenderCopy(renderer, Win, NULL, &temp);
     // To be added: display stats
     SDL_RenderPresent(renderer);
@@ -500,6 +502,30 @@ void NextMap(){
     else GenerateMap();
 }
 
+//void SpawnRandom(){
+//    srand((unsigned) time(NULL));
+//    int random1 = rand() % 100; // Out of 100%
+//    if (random1 > Sanity) { // Chance to spawn random
+//        // Finding free cell - Spawn range shall be twice the player vision field
+//        random = rand() % (playerVIS*2) + 1 - playerVIS;
+//        while ()
+//
+//
+//        random = rand() % 2; // 2 being number of monster types there are (more to be added later)
+//        switch(random) {
+//        case 1:
+//            break;
+//        case 2:
+//            break;
+//        }
+//        cout << "A noise echoes from afar..." << endl;
+//    }
+//}
+//
+//void DecaySanity(){
+//    Sanity -= SanityDecayPerTurn;
+//    SanityDecayPerTurn *= DecayMultiplierPerTurn;
+//}
 
 // CHECKED!!!!!
 void GenerateMap(){
@@ -668,7 +694,7 @@ void pMove(char input){
         cout << "You picked up a sword. It boosts your attack damage by 2.\n";
         Maps[CurrentMap][i][j].type = 1;
         break;
-    case 7:
+    case 7: // Attack skeleton
         for (int k = 0; k < (int)listOfEntities.size(); k++)
             if (listOfEntities[k].I == i && listOfEntities[k].J == j) {
                 Attack(player, listOfEntities[k]);
@@ -683,7 +709,14 @@ void pMove(char input){
             }
         break;
     case 8:
-        Maps[CurrentMap][i][j].type = 6; // To be added: chest randomly rolls an item
+        switch (rand() % 2) { // 2 being the number items this chest can drop
+        case 0:
+            Maps[CurrentMap][i][j].type = 6;
+            break;
+        case 1:
+            Maps[CurrentMap][i][j].type = 9;
+            break;
+        }
         break;
     case 9: // Pick up potion
         player.health = min(player.health + 5, 10);
